@@ -19,12 +19,34 @@ export function setStoredToken(token: string | null): void {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
+/**
+ * NEXT_PUBLIC_API_URL must be an absolute origin (https://host or http://host).
+ * If Hostinger/env omits the scheme (e.g. "aii.atechleb.com"), fetch() treats it as a
+ * relative path and the browser resolves it under the frontend origin — wrong.
+ */
+function normalizeApiBase(raw: string): string {
+  let base = raw.trim().replace(/\/+$/, "");
+  if (!base) {
+    throw new Error("NEXT_PUBLIC_API_URL is empty");
+  }
+  base = base.replace(/^\/+/, "");
+  if (!/^https?:\/\//i.test(base)) {
+    base = `https://${base}`;
+  }
+  try {
+    const u = new URL(base);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    throw new Error(`NEXT_PUBLIC_API_URL is not a valid URL: ${raw}`);
+  }
+}
+
 function apiBase(): string {
   const base = process.env.NEXT_PUBLIC_API_URL;
   if (!base) {
     throw new Error("NEXT_PUBLIC_API_URL is not set");
   }
-  return base.replace(/\/$/, "");
+  return normalizeApiBase(base);
 }
 
 export class ApiError extends Error {
@@ -65,7 +87,9 @@ export async function apiFetch<T>(
   path: string,
   init: RequestInit & { token?: string | null } = {},
 ): Promise<T> {
-  const url = `${apiBase()}/api${path.startsWith("/") ? path : `/${path}`}`;
+  const base = apiBase();
+  const segment = path.startsWith("/") ? path.slice(1) : path;
+  const url = new URL(segment, `${base}/api/`).href;
   const token = init.token ?? getStoredToken();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
