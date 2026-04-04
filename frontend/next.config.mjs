@@ -1,11 +1,13 @@
 import path from "path";
 import { fileURLToPath } from "url";
-import type { NextConfig } from "next";
+
+/** @type {import('next').NextConfig} */
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const nextConfig: NextConfig = {
-  // If a parent folder has another lockfile, pin this app as the workspace root for Turbopack.
+const nextConfig = {
+  reactStrictMode: true,
+
   turbopack: {
     root: path.join(__dirname),
   },

@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "npm exec -- next dev --webpack",
-    "build": "npm exec -- next build",
-    "start": "npm exec -- next start",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
