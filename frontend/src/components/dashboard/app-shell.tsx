@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { api, setStoredToken } from "@/lib/api-client";
+import { api, getStoredUser, setStoredToken, setStoredUser } from "@/lib/api-client";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -11,12 +11,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Fast path: use cached user so first paint doesn't wait for /user.
+    const cached = getStoredUser();
+    if (cached?.is_admin !== undefined) {
+      setIsAdmin(Boolean(cached.is_admin));
+    }
     let alive = true;
     api
       .me()
       .then((r) => {
         if (!alive) return;
         setIsAdmin(Boolean(r.user?.is_admin));
+        setStoredUser(r.user);
       })
       .catch(() => {
         /* ignore */
@@ -43,6 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       /* still clear local session */
     }
     setStoredToken(null);
+    setStoredUser(null);
     router.replace("/login");
   }
 

@@ -35,6 +35,11 @@ export default function ProjectDetailPage() {
       const res = await api.project(id);
       setProject(res.data);
       setError(null);
+      try {
+        sessionStorage.setItem(`aim_project_${id}`, JSON.stringify(res.data));
+      } catch {
+        /* ignore */
+      }
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) {
         setError("Project not found.");
@@ -45,6 +50,16 @@ export default function ProjectDetailPage() {
   }, [id]);
 
   useEffect(() => {
+    // Instant paint: show cached project while refreshing.
+    try {
+      const raw = sessionStorage.getItem(`aim_project_${id}`);
+      if (raw) {
+        const cached = JSON.parse(raw) as Project;
+        setProject(cached);
+      }
+    } catch {
+      /* ignore */
+    }
     void load();
   }, [load]);
 

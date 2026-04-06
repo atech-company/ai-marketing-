@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ApiError, api, setStoredToken } from "@/lib/api-client";
+import { ApiError, api, setStoredToken, setStoredUser } from "@/lib/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function LoginPage() {
     try {
       const res = await api.login({ email, password });
       setStoredToken(res.token);
+      setStoredUser(res.user);
       router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed.");

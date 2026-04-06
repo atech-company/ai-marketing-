@@ -15,10 +15,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // Instant paint: show last list while we refresh in background.
+    try {
+      const raw = sessionStorage.getItem("aim_projects_page_1");
+      if (raw) {
+        const cached = JSON.parse(raw) as Project[];
+        setProjects(cached);
+        setLoading(false);
+      }
+    } catch {
+      /* ignore */
+    }
     (async () => {
       try {
         const res = await api.projects(1);
-        if (!cancelled) setProjects(res.data);
+        if (!cancelled) {
+          setProjects(res.data);
+          try {
+            sessionStorage.setItem("aim_projects_page_1", JSON.stringify(res.data));
+          } catch {
+            /* ignore */
+          }
+        }
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof ApiError ? e.message : "Could not load projects.");

@@ -8,6 +8,7 @@ import type {
 import type { SocialTemplatesPack } from "@/types/social-templates";
 
 const TOKEN_KEY = "aim_discovery_token";
+const USER_KEY = "aim_discovery_user";
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -18,6 +19,26 @@ export function setStoredToken(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) localStorage.setItem(TOKEN_KEY, token);
   else localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(USER_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as User;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredUser(user: User | null): void {
+  if (typeof window === "undefined") return;
+  if (!user) {
+    localStorage.removeItem(USER_KEY);
+    return;
+  }
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 /**
