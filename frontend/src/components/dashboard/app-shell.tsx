@@ -2,17 +2,39 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { api, setStoredToken } from "@/lib/api-client";
-
-const nav = [
-  { href: "/dashboard", label: "Projects" },
-  { href: "/dashboard/projects/new", label: "New analysis" },
-  { href: "/dashboard/social-templates", label: "Social templates" },
-];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    api
+      .me()
+      .then((r) => {
+        if (!alive) return;
+        setIsAdmin(Boolean(r.user?.is_admin));
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const nav = useMemo(
+    () => [
+      { href: "/dashboard", label: "Projects" },
+      { href: "/dashboard/projects/new", label: "New analysis" },
+      { href: "/dashboard/social-templates", label: "Social templates" },
+      ...(isAdmin ? [{ href: "/dashboard/admin/users", label: "Admin · Users" }, { href: "/dashboard/admin/projects", label: "Admin · Projects" }] : []),
+    ],
+    [isAdmin],
+  );
 
   async function logout() {
     try {

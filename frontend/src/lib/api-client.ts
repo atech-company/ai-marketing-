@@ -1,5 +1,6 @@
 import type {
   AuthResponse,
+  AdminUserRow,
   PaginatedProjects,
   Project,
   User,
@@ -133,6 +134,12 @@ export const api = {
 
   project: (id: number) => apiFetch<{ data: Project }>(`/projects/${id}`),
 
+  updateProject: (id: number, body: { name: string }) =>
+    apiFetch<{ data: Project }>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  deleteProject: (id: number) =>
+    apiFetch<{ message: string }>(`/projects/${id}`, { method: "DELETE" }),
+
   regenerate: (id: number, scope: "analysis" | "content" | "crawl") =>
     apiFetch<{ message: string }>(`/projects/${id}/regenerate`, {
       method: "POST",
@@ -144,4 +151,27 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+
+  // Admin
+  adminUsers: (page = 1) => apiFetch<{ data: AdminUserRow[]; meta?: unknown }>(`/admin/users?page=${page}`),
+
+  adminCreateUser: (body: { name: string; email: string; password: string; is_admin?: boolean }) =>
+    apiFetch<{ user: AdminUserRow }>(`/admin/users`, { method: "POST", body: JSON.stringify(body) }),
+
+  adminDeleteUser: (id: number) => apiFetch<{ message: string }>(`/admin/users/${id}`, { method: "DELETE" }),
+
+  adminResetUserPassword: (id: number, password: string) =>
+    apiFetch<{ message: string }>(`/admin/users/${id}/reset-password`, {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    }),
+
+  adminProjects: (page = 1, q?: string) =>
+    apiFetch<{ data: Project[]; meta?: unknown }>(`/admin/projects?page=${page}${q ? `&q=${encodeURIComponent(q)}` : ""}`),
+
+  adminUpdateProject: (id: number, body: { name: string }) =>
+    apiFetch<{ data: Project }>(`/admin/projects/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  adminDeleteProject: (id: number) =>
+    apiFetch<{ message: string }>(`/admin/projects/${id}`, { method: "DELETE" }),
 };
