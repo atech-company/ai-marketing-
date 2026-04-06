@@ -6,3 +6,6 @@
 # OS / editors
 Thumbs.db
 .DS_Store
+
+# Keep backend local only
+/backend/
