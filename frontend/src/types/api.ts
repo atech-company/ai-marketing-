@@ -9,12 +9,21 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  is_admin?: boolean;
 }
 
 export interface AuthResponse {
   token: string;
   token_type: string;
   user: User;
+}
+
+export interface AdminUserRow {
+  id: number;
+  name: string;
+  email: string;
+  is_admin: boolean;
+  created_at: string | null;
 }
 
 export interface CrawledPageImage {
@@ -56,6 +65,7 @@ export interface GeneratedContent {
 export interface Project {
   id: number;
   name: string;
+  user?: { id: number; name: string; email: string } | null;
   website_url: string;
   status: ProjectStatus;
   error_message: string | null;
