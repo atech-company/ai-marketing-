@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
-import type { StoreAnalyticsResponse } from "@/types/api";
+import type { Project, StoreAnalyticsResponse } from "@/types/api";
 
 function pct(value: number, total: number): number {
   if (total <= 0) return 0;
@@ -17,9 +17,20 @@ export default function StoreAnalyticsPage() {
   const [moduleName, setModuleName] = useState("Store analytics");
   const [sourceType, setSourceType] = useState<"api" | "csv">("api");
   const [platform, setPlatform] = useState<"shopify" | "woocommerce">("shopify");
-
-  const [storeUrl, setStoreUrl] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | "">("");
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [newStoreUrl, setNewStoreUrl] = useState("");
+  const [newStoreApiKey, setNewStoreApiKey] = useState("");
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [createProjectError, setCreateProjectError] = useState<string | null>(null);
+  const [showEditCredentials, setShowEditCredentials] = useState(false);
+  const [editStoreUrl, setEditStoreUrl] = useState("");
+  const [editStoreApiKey, setEditStoreApiKey] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [csvFile, setCsvFile] = useState<File | null>(null);
 
   const [rangeDays, setRangeDays] = useState(90);
@@ -29,14 +40,62 @@ export default function StoreAnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StoreAnalyticsResponse | null>(null);
 
+  useEffect(() => {
+    if (sourceType !== "api") return;
+    let active = true;
+    (async () => {
+      try {
+        const res = await api.projects(1);
+        if (!active) return;
+        setProjects(res.data);
+        if (!selectedProjectId) {
+          const withConfig = res.data.find((p) => p.has_store_config);
+          if (withConfig) setSelectedProjectId(withConfig.id);
+        }
+      } catch {
+        if (!active) return;
+        setProjects([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [selectedProjectId, sourceType]);
+
+  async function onCreateProjectWithCredentials() {
+    setCreateProjectError(null);
+    setCreatingProject(true);
+    try {
+      const res = await api.createProject({
+        name: newProjectName.trim(),
+        website_url: newWebsiteUrl.trim(),
+        store_platform: platform,
+        store_url: newStoreUrl.trim(),
+        store_api_key: newStoreApiKey.trim(),
+      });
+      const created = res.data;
+      setProjects((prev) => [created, ...prev]);
+      setSelectedProjectId(created.id);
+      setShowCreateProject(false);
+      setNewProjectName("");
+      setNewWebsiteUrl("");
+      setNewStoreUrl("");
+      setNewStoreApiKey("");
+    } catch (e) {
+      setCreateProjectError(e instanceof ApiError ? e.message : "Failed to create project.");
+    } finally {
+      setCreatingProject(false);
+    }
+  }
+
   const canAnalyze = useMemo(() => {
     if (!moduleName.trim()) return false;
     if (rangeDays < 1 || maxOrders < 1) return false;
     if (sourceType === "api") {
-      return storeUrl.trim().length > 0 && apiKey.trim().length > 0;
+      return typeof selectedProjectId === "number";
     }
     return csvFile !== null;
-  }, [apiKey, csvFile, maxOrders, moduleName, rangeDays, sourceType, storeUrl]);
+  }, [csvFile, maxOrders, moduleName, rangeDays, selectedProjectId, sourceType]);
 
   const aiDiscussion = useMemo(() => {
     if (!result) return null;
@@ -94,6 +153,39 @@ export default function StoreAnalyticsPage() {
     return result.stats.revenue_by_day.slice(-30);
   }, [result]);
 
+  const selectedProject = useMemo(() => {
+    if (typeof selectedProjectId !== "number") return null;
+    return projects.find((p) => p.id === selectedProjectId) ?? null;
+  }, [projects, selectedProjectId]);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+    setPlatform((selectedProject.store_platform as "shopify" | "woocommerce") ?? "shopify");
+    setEditStoreUrl(selectedProject.store_url ?? "");
+    setEditStoreApiKey("");
+  }, [selectedProject]);
+
+  async function onSaveCredentials() {
+    if (!selectedProject || !editStoreUrl.trim() || !editStoreApiKey.trim()) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const res = await api.updateProject(selectedProject.id, {
+        store_platform: platform,
+        store_url: editStoreUrl.trim(),
+        store_api_key: editStoreApiKey.trim(),
+      });
+      const updated = res.data;
+      setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setShowEditCredentials(false);
+      setEditStoreApiKey("");
+    } catch (e) {
+      setEditError(e instanceof ApiError ? e.message : "Failed to update credentials.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
   async function onAnalyze() {
     if (!canAnalyze) return;
     setLoading(true);
@@ -102,11 +194,10 @@ export default function StoreAnalyticsPage() {
 
     try {
       if (sourceType === "api") {
-        const res = await api.storeAnalyticsAnalyzeApi({
-          module_name: moduleName.trim(),
-          platform,
-          store_url: storeUrl.trim(),
-          api_key: apiKey.trim(),
+        if (typeof selectedProjectId !== "number") {
+          throw new Error("Please select a project.");
+        }
+        const res = await api.storeAnalyticsAnalyzeProject(selectedProjectId, {
           range_days: rangeDays,
           max_orders: maxOrders,
         });
@@ -134,8 +225,7 @@ export default function StoreAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Store analytics</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Enter your store URL + API key, click <strong>Analyze</strong>, and we compute best items, best
-          customers, and revenue stats for the selected range.
+          Select a project with saved store credentials, then click <strong>Analyze</strong>.
         </p>
       </div>
 
@@ -162,7 +252,7 @@ export default function StoreAnalyticsPage() {
             </select>
           </div>
 
-          <div className={sourceType === "api" ? "" : "hidden"}>
+          <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Platform</label>
             <select
               value={platform}
@@ -175,29 +265,46 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div className={sourceType === "api" ? "" : "hidden"}>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Store URL</label>
-            <input
-              value={storeUrl}
-              onChange={(e) => setStoreUrl(e.target.value)}
-              placeholder="yourstore.myshopify.com"
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Project</label>
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value ? Number(e.target.value) : "")}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </div>
-
-          <div className={sourceType === "api" ? "" : "hidden"}>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">API key / access token</label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={platform === "woocommerce" ? "ck_xxx|cs_xxx" : "Shopify Admin API access token"}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
-            />
+            >
+              <option value="">Select project...</option>
+              {projects
+                .filter((p) => p.has_store_config)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.store_platform ?? "api"})
+                  </option>
+                ))}
+            </select>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {platform === "woocommerce"
-                ? 'WooCommerce format: "consumer_key|consumer_secret" (also supports ":" or "," separators).'
-                : "Shopify: use Admin API access token."}
+              Only projects with saved store URL + API key are listed. Add these in Create Project.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setCreateProjectError(null);
+                setShowCreateProject((v) => !v);
+              }}
+              className="mt-2 text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400"
+            >
+              {showCreateProject ? "Hide create project form" : "Create project here and save credentials"}
+            </button>
+            {selectedProject ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditError(null);
+                  setShowEditCredentials((v) => !v);
+                }}
+                className="ml-3 mt-2 text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400"
+              >
+                {showEditCredentials ? "Hide edit credentials" : "Edit saved credentials"}
+              </button>
+            ) : null}
           </div>
 
           <div className={sourceType === "csv" ? "" : "hidden"}>
@@ -235,6 +342,100 @@ export default function StoreAnalyticsPage() {
           </div>
         </div>
 
+        {sourceType === "api" && showCreateProject ? (
+          <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Create project (with store credentials)</h3>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Save once, then analyze anytime without entering URL/API key again.
+            </p>
+            {createProjectError ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+                {createProjectError}
+              </p>
+            ) : null}
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <input
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="Project name"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+              <input
+                value={newWebsiteUrl}
+                onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                placeholder="Website URL (for crawler)"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+              <input
+                value={newStoreUrl}
+                onChange={(e) => setNewStoreUrl(e.target.value)}
+                placeholder="Store URL"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+              <input
+                type="password"
+                value={newStoreApiKey}
+                onChange={(e) => setNewStoreApiKey(e.target.value)}
+                placeholder={platform === "woocommerce" ? "ck_xxx|cs_xxx" : "Shopify API token"}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                disabled={
+                  creatingProject ||
+                  !newProjectName.trim() ||
+                  !newWebsiteUrl.trim() ||
+                  !newStoreUrl.trim() ||
+                  !newStoreApiKey.trim()
+                }
+                onClick={() => void onCreateProjectWithCredentials()}
+                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+              >
+                {creatingProject ? "Creating..." : "Create and use this project"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {sourceType === "api" && showEditCredentials && selectedProject ? (
+          <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Edit saved credentials</h3>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Project: {selectedProject.name}</p>
+            {editError ? (
+              <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+                {editError}
+              </p>
+            ) : null}
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <input
+                value={editStoreUrl}
+                onChange={(e) => setEditStoreUrl(e.target.value)}
+                placeholder="Store URL"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+              <input
+                type="password"
+                value={editStoreApiKey}
+                onChange={(e) => setEditStoreApiKey(e.target.value)}
+                placeholder="New API key / token"
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                disabled={savingEdit || !editStoreUrl.trim() || !editStoreApiKey.trim()}
+                onClick={() => void onSaveCredentials()}
+                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+              >
+                {savingEdit ? "Saving..." : "Save credentials"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
@@ -246,7 +447,7 @@ export default function StoreAnalyticsPage() {
           </button>
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            We compute totals + best products/customers from orders (true sales stats).
+            We compute totals, product/customer rankings, concentration, and repeat customer indicators.
           </p>
         </div>
       </section>

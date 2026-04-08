@@ -67,6 +67,9 @@ export interface Project {
   name: string;
   user?: { id: number; name: string; email: string } | null;
   website_url: string;
+  store_platform?: "shopify" | "woocommerce" | null;
+  store_url?: string | null;
+  has_store_config?: boolean;
   status: ProjectStatus;
   error_message: string | null;
   created_at: string | null;

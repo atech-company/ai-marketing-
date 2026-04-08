@@ -176,12 +176,26 @@ export const api = {
   projects: (page = 1) =>
     apiFetch<PaginatedProjects>(`/projects?page=${page}`),
 
-  createProject: (body: { name: string; website_url: string }) =>
+  createProject: (body: {
+    name: string;
+    website_url: string;
+    store_platform?: "shopify" | "woocommerce";
+    store_url?: string;
+    store_api_key?: string;
+  }) =>
     apiFetch<{ data: Project }>("/projects", { method: "POST", body: JSON.stringify(body) }),
 
   project: (id: number) => apiFetch<{ data: Project }>(`/projects/${id}`),
 
-  updateProject: (id: number, body: { name: string }) =>
+  updateProject: (
+    id: number,
+    body: {
+      name?: string;
+      store_platform?: "shopify" | "woocommerce";
+      store_url?: string;
+      store_api_key?: string;
+    },
+  ) =>
     apiFetch<{ data: Project }>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 
   deleteProject: (id: number) =>
@@ -236,6 +250,18 @@ export const api = {
         ...body,
         source_type: "api",
       }),
+    }),
+
+  storeAnalyticsAnalyzeProject: (
+    projectId: number,
+    body: {
+      range_days?: number;
+      max_orders?: number;
+    },
+  ) =>
+    apiFetch<{ data: StoreAnalyticsResponse }>(`/projects/${projectId}/store-analytics/analyze`, {
+      method: "POST",
+      body: JSON.stringify(body),
     }),
 
   storeAnalyticsAnalyzeCsv: (body: {
