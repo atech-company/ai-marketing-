@@ -9,6 +9,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [uiLang, setUiLang] = useState<"en" | "ar">(() => {
+    if (typeof window === "undefined") return "en";
+    return localStorage.getItem("aim_ui_lang") === "ar" ? "ar" : "en";
+  });
 
   useEffect(() => {
     // Fast path: use cached user so first paint doesn't wait for /user.
@@ -31,6 +35,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       alive = false;
     };
   }, []);
+
+  function switchLanguage(next: "en" | "ar") {
+    setUiLang(next);
+    localStorage.setItem("aim_ui_lang", next);
+    document.documentElement.lang = next;
+    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
+    window.location.reload();
+  }
 
   const nav = useMemo(
     () => [
@@ -107,13 +119,37 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="hidden text-sm text-zinc-500 dark:text-zinc-400 md:block">
             Turn any website into marketing direction.
           </div>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 md:hidden"
-          >
-            Log out
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => switchLanguage("en")}
+              className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                uiLang === "en"
+                  ? "bg-violet-600 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => switchLanguage("ar")}
+              className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                uiLang === "ar"
+                  ? "bg-violet-600 text-white"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              }`}
+            >
+              AR
+            </button>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 md:hidden"
+            >
+              Log out
+            </button>
+          </div>
         </header>
         <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
       </div>

@@ -27,14 +27,15 @@ function loadGoogleTranslateScript(): void {
 }
 
 export function GlobalTranslateToggle() {
-  const [lang, setLang] = useState<UiLanguage>("en");
+  const [lang, setLang] = useState<UiLanguage>(() => {
+    if (typeof window === "undefined") return "en";
+    return localStorage.getItem(LANG_KEY) === "ar" ? "ar" : "en";
+  });
 
   useEffect(() => {
-    const stored = (localStorage.getItem(LANG_KEY) as UiLanguage | null) ?? "en";
-    setLang(stored === "ar" ? "ar" : "en");
-    document.documentElement.lang = stored === "ar" ? "ar" : "en";
-    document.documentElement.dir = stored === "ar" ? "rtl" : "ltr";
-  }, []);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  }, [lang]);
 
   useEffect(() => {
     // Hidden container required by Google translate script.

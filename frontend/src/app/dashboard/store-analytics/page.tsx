@@ -28,7 +28,11 @@ function categoryFromProductName(name: string, language: "en" | "ar" = "en"): st
 }
 
 export default function StoreAnalyticsPage() {
-  const [language, setLanguage] = useState<"en" | "ar">("en");
+  const [language, setLanguage] = useState<"en" | "ar">(() => {
+    if (typeof window === "undefined") return "en";
+    const stored = localStorage.getItem("aim_ui_lang");
+    return stored === "ar" ? "ar" : "en";
+  });
   const [moduleName, setModuleName] = useState("Store analytics");
   const [sourceType, setSourceType] = useState<"api" | "csv">("api");
   const [platform, setPlatform] = useState<"shopify" | "woocommerce">("shopify");
@@ -163,7 +167,7 @@ export default function StoreAnalyticsPage() {
         ];
 
     return { focus, ideas, concentration, repeatRate };
-  }, [result]);
+  }, [language, result]);
 
   const trendPoints = useMemo(() => {
     if (!result) return [];
@@ -267,6 +271,38 @@ export default function StoreAnalyticsPage() {
       acquisition: 60,
       retention: 40,
       reason: "Balanced growth mode: scale traffic while protecting repeat purchase programs.",
+    };
+  }, [repeatRate, result]);
+
+  const mathPlan = useMemo(() => {
+    if (!result) return null;
+    const totals = result.stats.totals;
+    const currentRevenue = totals.total_revenue;
+    const currentAov = totals.average_order_value;
+    const currentRepeat = repeatRate;
+    const targetAov = currentAov * 1.1;
+    const targetRepeat = Math.max(currentRepeat, 35);
+    const aovUpside = totals.total_orders * (targetAov - currentAov);
+    const retentionUpside = currentRevenue * ((targetRepeat - currentRepeat) / 100) * 0.6;
+    const projectedRevenue = currentRevenue + Math.max(0, aovUpside) + Math.max(0, retentionUpside);
+    const growthPct = currentRevenue > 0 ? ((projectedRevenue - currentRevenue) / currentRevenue) * 100 : 0;
+    const top3Share =
+      pct(
+        (result.stats.best_products[0]?.revenue ?? 0) +
+          (result.stats.best_products[1]?.revenue ?? 0) +
+          (result.stats.best_products[2]?.revenue ?? 0),
+        currentRevenue,
+      ) || 0;
+
+    return {
+      currentRevenue,
+      projectedRevenue,
+      growthPct,
+      currentAov,
+      targetAov,
+      currentRepeat,
+      targetRepeat,
+      top3Share,
     };
   }, [repeatRate, result]);
 
@@ -924,6 +960,52 @@ export default function StoreAnalyticsPage() {
               <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-300">{budgetSplit.reason}</p>
             </div>
           </section>
+
+          {mathPlan ? (
+            <section className="rounded-2xl border border-cyan-200/80 bg-cyan-50 p-5 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-500/10">
+              <h2 className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">AI growth math blueprint</h2>
+              <p className="mt-1 text-xs text-cyan-800/90 dark:text-cyan-100/90">
+                Exact numeric path to improve revenue using AOV + repeat-rate levers.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border border-cyan-200 bg-white p-3 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  <div className="text-xs text-cyan-700 dark:text-cyan-200">Current revenue</div>
+                  <div className="mt-1 text-base font-semibold text-cyan-900 dark:text-cyan-100">
+                    {money(mathPlan.currentRevenue, language)}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200 bg-white p-3 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  <div className="text-xs text-cyan-700 dark:text-cyan-200">Projected revenue</div>
+                  <div className="mt-1 text-base font-semibold text-cyan-900 dark:text-cyan-100">
+                    {money(mathPlan.projectedRevenue, language)}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200 bg-white p-3 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  <div className="text-xs text-cyan-700 dark:text-cyan-200">Potential growth</div>
+                  <div className="mt-1 text-base font-semibold text-cyan-900 dark:text-cyan-100">
+                    {mathPlan.growthPct.toFixed(1)}%
+                  </div>
+                </div>
+                <div className="rounded-xl border border-cyan-200 bg-white p-3 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  <div className="text-xs text-cyan-700 dark:text-cyan-200">Top-3 product concentration</div>
+                  <div className="mt-1 text-base font-semibold text-cyan-900 dark:text-cyan-100">
+                    {mathPlan.top3Share.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+              <ul className="mt-3 space-y-2 text-sm text-cyan-900 dark:text-cyan-100">
+                <li className="rounded-lg border border-cyan-200 bg-white px-3 py-2 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  AOV target: {money(mathPlan.currentAov, language)} to {money(mathPlan.targetAov, language)} (10% uplift).
+                </li>
+                <li className="rounded-lg border border-cyan-200 bg-white px-3 py-2 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  Repeat-rate target: {mathPlan.currentRepeat.toFixed(1)}% to {mathPlan.targetRepeat.toFixed(1)}%.
+                </li>
+                <li className="rounded-lg border border-cyan-200 bg-white px-3 py-2 dark:border-cyan-500/30 dark:bg-zinc-950/40">
+                  If Top-3 concentration is above 60%, diversify by pushing category #2 and #3 with dedicated campaigns.
+                </li>
+              </ul>
+            </section>
+          ) : null}
 
           <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Best customers (top 10)</h2>
