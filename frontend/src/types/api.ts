@@ -122,5 +122,12 @@ export interface StoreAnalyticsResponse {
   module_name: string;
   platform: string;
   stats: StoreAnalyticsStats;
+  ai_discussion?: {
+    executive_summary: string;
+    focus_items: string[];
+    marketing_ideas: string[];
+    risks: string[];
+    next_30_day_plan: string[];
+  } | null;
   meta?: Record<string, unknown>;
 }

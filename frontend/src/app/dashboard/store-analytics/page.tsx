@@ -362,10 +362,15 @@ export default function StoreAnalyticsPage() {
             </p>
             {aiDiscussion && (
               <div className="mt-3 space-y-4">
+                {result.ai_discussion?.executive_summary && (
+                  <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-200">
+                    {result.ai_discussion.executive_summary}
+                  </div>
+                )}
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Focus now</h3>
                   <ul className="mt-2 space-y-2 text-sm text-zinc-700 dark:text-zinc-200">
-                    {aiDiscussion.focus.map((x, i) => (
+                    {(result.ai_discussion?.focus_items?.length ? result.ai_discussion.focus_items : aiDiscussion.focus).map((x, i) => (
                       <li key={i} className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950/40">
                         {x}
                       </li>
@@ -375,11 +380,31 @@ export default function StoreAnalyticsPage() {
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Marketing ideas</h3>
                   <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
-                    {aiDiscussion.ideas.map((x, i) => (
+                    {(result.ai_discussion?.marketing_ideas?.length ? result.ai_discussion.marketing_ideas : aiDiscussion.ideas).map((x, i) => (
                       <li key={i}>{x}</li>
                     ))}
                   </ul>
                 </div>
+                {result.ai_discussion?.next_30_day_plan?.length ? (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Next 30-day plan</h3>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
+                      {result.ai_discussion.next_30_day_plan.map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {result.ai_discussion?.risks?.length ? (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Risks to watch</h3>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
+                      {result.ai_discussion.risks.map((x, i) => (
+                        <li key={i}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             )}
           </section>
