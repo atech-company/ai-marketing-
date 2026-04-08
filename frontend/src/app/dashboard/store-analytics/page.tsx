@@ -13,6 +13,16 @@ function money(n: number): string {
   return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function categoryFromProductName(name: string): string {
+  const lower = name.toLowerCase();
+  if (/(shirt|hoodie|jacket|pants|dress|shoes|sneaker|clothes|apparel)/.test(lower)) return "Apparel";
+  if (/(cream|serum|makeup|skin|cosmetic|beauty|lotion|shampoo)/.test(lower)) return "Beauty";
+  if (/(phone|case|charger|cable|headphone|laptop|keyboard|mouse|tech)/.test(lower)) return "Electronics";
+  if (/(protein|vitamin|supplement|omega|nutrition)/.test(lower)) return "Supplements";
+  if (/(home|kitchen|decor|furniture|lamp|bedding)/.test(lower)) return "Home";
+  return "Other";
+}
+
 export default function StoreAnalyticsPage() {
   const [moduleName, setModuleName] = useState("Store analytics");
   const [sourceType, setSourceType] = useState<"api" | "csv">("api");
@@ -31,6 +41,7 @@ export default function StoreAnalyticsPage() {
   const [editStoreApiKey, setEditStoreApiKey] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [completedPlanItems, setCompletedPlanItems] = useState<Record<string, boolean>>({});
   const [csvFile, setCsvFile] = useState<File | null>(null);
 
   const [rangeDays, setRangeDays] = useState(90);
@@ -152,6 +163,135 @@ export default function StoreAnalyticsPage() {
     if (!result) return [];
     return result.stats.revenue_by_day.slice(-30);
   }, [result]);
+
+  const repeatRate = useMemo(() => {
+    if (!result) return 0;
+    const total = result.stats.totals.total_customers;
+    if (total <= 0) return 0;
+    return (result.stats.totals.returning_customers / total) * 100;
+  }, [result]);
+
+  const categoryBreakdown = useMemo(() => {
+    if (!result) return [];
+    const map = new Map<string, number>();
+    for (const p of result.stats.best_products) {
+      const cat = categoryFromProductName(p.product_name);
+      map.set(cat, (map.get(cat) ?? 0) + p.revenue);
+    }
+    return Array.from(map.entries())
+      .map(([category, revenue]) => ({ category, revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 6);
+  }, [result]);
+
+  const segments = useMemo(() => {
+    if (!result) return [];
+    return result.stats.best_customers.slice(0, 10).map((c) => {
+      if (c.order_count >= 4 || c.spend >= result.stats.totals.average_order_value * 4) {
+        return { ...c, segment: "VIP / High Value" };
+      }
+      if (c.order_count >= 2) {
+        return { ...c, segment: "Repeat Buyer" };
+      }
+      return { ...c, segment: "One-time Buyer" };
+    });
+  }, [result]);
+
+  const bundleSuggestions = useMemo(() => {
+    if (!result) return [];
+    const top = result.stats.best_products.slice(0, 4);
+    if (top.length < 2) return [];
+    const suggestions: Array<{ title: string; why: string }> = [];
+    for (let i = 0; i < top.length; i += 1) {
+      const a = top[i];
+      const b = top[i + 1];
+      if (!a || !b) continue;
+      suggestions.push({
+        title: `${a.product_name} + ${b.product_name}`,
+        why: `Bundle your top sellers to increase AOV. Combined revenue weight is ${pct(a.revenue + b.revenue, result.stats.totals.total_revenue).toFixed(1)}% of current sales.`,
+      });
+    }
+    return suggestions.slice(0, 3);
+  }, [result]);
+
+  const nextActions = useMemo(() => {
+    if (!result) return [];
+    const actions: string[] = [];
+    const top = result.stats.best_products[0];
+    if (top) {
+      actions.push(`Scale paid traffic on "${top.product_name}" first with 3 ad angles (problem, proof, offer).`);
+    }
+    if (repeatRate < 30) {
+      actions.push("Launch a retention flow now: post-purchase email + reorder reminders + loyalty incentive.");
+    } else {
+      actions.push("Repeat rate is strong: build lookalike audiences from repeat buyers and increase budget gradually.");
+    }
+    if (bundleSuggestions[0]) {
+      actions.push(`Publish a bundle landing page for "${bundleSuggestions[0].title}" and test a 10-15% bundle discount.`);
+    }
+    actions.push("Set weekly KPI targets: Revenue, Repeat Rate, AOV, and Top 3 Product Share.");
+    return actions;
+  }, [bundleSuggestions, repeatRate, result]);
+
+  const budgetSplit = useMemo(() => {
+    if (!result) return { acquisition: 60, retention: 40, reason: "" };
+    const topShare = pct((result.stats.best_products[0]?.revenue ?? 0), result.stats.totals.total_revenue);
+    if (repeatRate < 20) {
+      return {
+        acquisition: 45,
+        retention: 55,
+        reason: "Repeat rate is low, so prioritize retention systems before scaling paid traffic.",
+      };
+    }
+    if (repeatRate < 30) {
+      return {
+        acquisition: 55,
+        retention: 45,
+        reason: "Retention is improving but still fragile. Keep near-balanced spend.",
+      };
+    }
+    if (topShare > 45) {
+      return {
+        acquisition: 65,
+        retention: 35,
+        reason: "Strong winner product and healthy repeat behavior support more acquisition scaling.",
+      };
+    }
+    return {
+      acquisition: 60,
+      retention: 40,
+      reason: "Balanced growth mode: scale traffic while protecting repeat purchase programs.",
+    };
+  }, [repeatRate, result]);
+
+  const sevenDayPlan = useMemo(() => {
+    const top = result?.stats.best_products[0]?.product_name ?? "Top product";
+    return [
+      `Day 1: Audit ${top} product page (headline, offer, trust, FAQ).`,
+      `Day 2: Launch 3 ad creatives for ${top} (problem, social proof, urgency).`,
+      "Day 3: Build bundle offer and publish dedicated landing page.",
+      "Day 4: Set retention automations (post-purchase, win-back, reorder reminders).",
+      "Day 5: Segment customers (VIP, repeat, one-time) and map campaigns.",
+      "Day 6: Test offer variants (discount, bonus, free shipping threshold).",
+      "Day 7: Review KPIs and reallocate budget based on ROAS + repeat rate.",
+    ];
+  }, [result]);
+
+  const campaignCopies = useMemo(() => {
+    if (!result) return [];
+    return result.stats.best_products.slice(0, 3).map((p) => ({
+      product: p.product_name,
+      copies: [
+        `Discover why customers keep choosing ${p.product_name}. Limited stock this week.`,
+        `Boost your results with ${p.product_name}. Trusted by top buyers in our store.`,
+        `${p.product_name}: best value for the price. Order now and feel the difference.`,
+      ],
+    }));
+  }, [result]);
+
+  function togglePlanItem(item: string) {
+    setCompletedPlanItems((prev) => ({ ...prev, [item]: !prev[item] }));
+  }
 
   const selectedProject = useMemo(() => {
     if (typeof selectedProjectId !== "number") return null;
@@ -493,6 +633,40 @@ export default function StoreAnalyticsPage() {
                 <div className="mt-1 text-base font-semibold">{result.stats.totals.returning_customers}</div>
               </div>
             </div>
+            <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 p-3 dark:border-violet-500/30 dark:bg-violet-500/10">
+              <div className="text-xs font-medium text-violet-700 dark:text-violet-200">Repeat rate</div>
+              <div className="mt-1 text-base font-semibold text-violet-800 dark:text-violet-100">{repeatRate.toFixed(1)}%</div>
+              <div className="mt-1 text-xs text-violet-700/90 dark:text-violet-200/90">
+                {repeatRate < 30
+                  ? "Priority: improve retention now (email/SMS flows, reorder incentives, loyalty)."
+                  : "Good retention base. Next move: scale acquisition using repeat-buyer lookalikes."}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Revenue by category (estimated)</h2>
+            <div className="mt-3 space-y-2">
+              {categoryBreakdown.map((c) => (
+                <div key={c.category} className="rounded-xl border border-zinc-100 p-3 dark:border-zinc-800">
+                  <div className="mb-1 flex items-center justify-between">
+                    <div className="text-sm font-medium">{c.category}</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-300">{money(c.revenue)}</div>
+                  </div>
+                  <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div
+                      className="h-2 rounded-full bg-emerald-600"
+                      style={{ width: `${pct(c.revenue, result.stats.totals.total_revenue)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {categoryBreakdown.length === 0 ? (
+                <p className="rounded-xl border border-zinc-100 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800">
+                  No category distribution yet.
+                </p>
+              ) : null}
+            </div>
           </section>
 
           <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
@@ -608,6 +782,125 @@ export default function StoreAnalyticsPage() {
                 ) : null}
               </div>
             )}
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Customer segments (actionable)</h2>
+            <div className="mt-3 overflow-hidden rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-950/50 dark:text-zinc-400">
+                  <tr>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Segment</th>
+                    <th className="px-4 py-3">Spend</th>
+                    <th className="px-4 py-3">Orders</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {segments.map((c, idx) => (
+                    <tr key={`${c.customer_email}-${idx}`} className="border-t border-zinc-100 dark:border-zinc-800">
+                      <td className="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{c.customer_email}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{c.segment}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{money(c.spend)}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{c.order_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Bundle suggestions</h2>
+            <div className="mt-3 space-y-2">
+              {bundleSuggestions.map((b, idx) => (
+                <div key={idx} className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{b.title}</div>
+                  <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{b.why}</div>
+                </div>
+              ))}
+              {bundleSuggestions.length === 0 ? (
+                <p className="rounded-xl border border-zinc-100 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800">
+                  Not enough top products to generate bundles yet.
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-amber-200/80 bg-amber-50 p-5 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+            <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-100">What should I do next? (AI decisions)</h2>
+            <ul className="mt-3 space-y-2">
+              {nextActions.map((a, i) => (
+                <li key={i} className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-amber-900 dark:border-amber-500/30 dark:bg-zinc-950/40 dark:text-amber-100">
+                  {a}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">7-day action plan</h2>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Execute this weekly sprint and check off each completed step.
+            </p>
+            <div className="mt-3 space-y-2">
+              {sevenDayPlan.map((item) => (
+                <label
+                  key={item}
+                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950/40"
+                >
+                  <input
+                    type="checkbox"
+                    checked={Boolean(completedPlanItems[item])}
+                    onChange={() => togglePlanItem(item)}
+                    className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 dark:border-zinc-700"
+                  />
+                  <span className={completedPlanItems[item] ? "line-through opacity-70" : ""}>{item}</span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Campaign copy suggestions (top products)</h2>
+            <div className="mt-3 space-y-3">
+              {campaignCopies.map((cp) => (
+                <div key={cp.product} className="rounded-xl border border-zinc-100 p-3 dark:border-zinc-800">
+                  <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{cp.product}</div>
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-zinc-700 dark:text-zinc-200">
+                    {cp.copies.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {campaignCopies.length === 0 ? (
+                <p className="rounded-xl border border-zinc-100 px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800">
+                  No top products available yet for campaign copy generation.
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Budget split recommendation</h2>
+            <div className="mt-3 rounded-xl border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Acquisition</span>
+                <span className="font-semibold">{budgetSplit.acquisition}%</span>
+              </div>
+              <div className="mt-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${budgetSplit.acquisition}%` }} />
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="font-medium">Retention</span>
+                <span className="font-semibold">{budgetSplit.retention}%</span>
+              </div>
+              <div className="mt-1 h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${budgetSplit.retention}%` }} />
+              </div>
+              <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-300">{budgetSplit.reason}</p>
+            </div>
           </section>
 
           <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
