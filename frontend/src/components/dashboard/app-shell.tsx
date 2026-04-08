@@ -40,7 +40,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setUiLang(next);
     localStorage.setItem("aim_ui_lang", next);
     document.documentElement.lang = next;
-    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
     window.location.reload();
   }
 

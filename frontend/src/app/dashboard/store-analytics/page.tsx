@@ -27,6 +27,10 @@ function categoryFromProductName(name: string, language: "en" | "ar" = "en"): st
   return label("Other", "أخرى");
 }
 
+function tx(language: "en" | "ar", en: string, ar: string): string {
+  return language === "ar" ? ar : en;
+}
+
 export default function StoreAnalyticsPage() {
   const [language, setLanguage] = useState<"en" | "ar">(() => {
     if (typeof window === "undefined") return "en";
@@ -405,18 +409,19 @@ export default function StoreAnalyticsPage() {
   }
 
   return (
-    <div dir={isArabic ? "rtl" : "ltr"} lang={language} className="mx-auto max-w-5xl space-y-6">
+    <div lang={language} className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Store analytics</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{tx(language, "Store analytics", "تحليل المتجر")}</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Select a project with saved store credentials, then click <strong>Analyze</strong>.
+          {tx(language, "Select a project with saved store credentials, then click ", "اختر مشروعا محفوظا ببيانات المتجر ثم اضغط ")}
+          <strong>{tx(language, "Analyze", "تحليل")}</strong>.
         </p>
       </div>
 
       <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Module name</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Module name", "اسم الوحدة")}</label>
             <input
               value={moduleName}
               onChange={(e) => setModuleName(e.target.value)}
@@ -439,19 +444,19 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Source type</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Source type", "نوع المصدر")}</label>
             <select
               value={sourceType}
               onChange={(e) => setSourceType(e.target.value as "api" | "csv")}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             >
-              <option value="api">API (Shopify / WooCommerce)</option>
-              <option value="csv">CSV orders upload</option>
+              <option value="api">{tx(language, "API (Shopify / WooCommerce)", "واجهة API (شوبيفاي / ووكومرس)")}</option>
+              <option value="csv">{tx(language, "CSV orders upload", "رفع CSV للطلبات")}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Platform</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Platform", "المنصة")}</label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value as "shopify" | "woocommerce")}
@@ -463,13 +468,13 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div className={sourceType === "api" ? "" : "hidden"}>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Project</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Project", "المشروع")}</label>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value ? Number(e.target.value) : "")}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             >
-              <option value="">Select project...</option>
+              <option value="">{tx(language, "Select project...", "اختر المشروع...")}</option>
               {projects
                 .filter((p) => p.has_store_config)
                 .map((p) => (
@@ -479,7 +484,7 @@ export default function StoreAnalyticsPage() {
                 ))}
             </select>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Only projects with saved store URL + API key are listed. Add these in Create Project.
+              {tx(language, "Only projects with saved store URL + API key are listed. Add these in Create Project.", "يتم عرض المشاريع التي تحتوي على رابط المتجر ومفتاح API فقط. أضفها عند إنشاء المشروع.")}
             </p>
             <button
               type="button"
@@ -489,7 +494,7 @@ export default function StoreAnalyticsPage() {
               }}
               className="mt-2 text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400"
             >
-              {showCreateProject ? "Hide create project form" : "Create project here and save credentials"}
+              {showCreateProject ? tx(language, "Hide create project form", "إخفاء نموذج إنشاء المشروع") : tx(language, "Create project here and save credentials", "أنشئ المشروع هنا واحفظ بيانات الدخول")}
             </button>
             {selectedProject ? (
               <button
@@ -500,13 +505,13 @@ export default function StoreAnalyticsPage() {
                 }}
                 className="ml-3 mt-2 text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400"
               >
-                {showEditCredentials ? "Hide edit credentials" : "Edit saved credentials"}
+                {showEditCredentials ? tx(language, "Hide edit credentials", "إخفاء تعديل البيانات") : tx(language, "Edit saved credentials", "تعديل البيانات المحفوظة")}
               </button>
             ) : null}
           </div>
 
           <div className={sourceType === "csv" ? "" : "hidden"}>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">CSV file</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "CSV file", "ملف CSV")}</label>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -520,7 +525,7 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Range (days)</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Range (days)", "المدة (بالأيام)")}</label>
             <input
               type="number"
               value={rangeDays}
@@ -530,7 +535,7 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Max orders</label>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Max orders", "الحد الأقصى للطلبات")}</label>
             <input
               type="number"
               value={maxOrders}
@@ -542,9 +547,9 @@ export default function StoreAnalyticsPage() {
 
         {sourceType === "api" && showCreateProject ? (
           <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Create project (with store credentials)</h3>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{tx(language, "Create project (with store credentials)", "إنشاء مشروع (مع بيانات المتجر)")}</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Save once, then analyze anytime without entering URL/API key again.
+              {tx(language, "Save once, then analyze anytime without entering URL/API key again.", "احفظ مرة واحدة ثم حلل في أي وقت بدون إدخال الرابط والمفتاح مجددا.")}
             </p>
             {createProjectError ? (
               <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
@@ -591,7 +596,7 @@ export default function StoreAnalyticsPage() {
                 onClick={() => void onCreateProjectWithCredentials()}
                 className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
               >
-                {creatingProject ? "Creating..." : "Create and use this project"}
+                {creatingProject ? tx(language, "Creating...", "جار الإنشاء...") : tx(language, "Create and use this project", "إنشاء واستخدام هذا المشروع")}
               </button>
             </div>
           </div>
@@ -599,7 +604,7 @@ export default function StoreAnalyticsPage() {
 
         {sourceType === "api" && showEditCredentials && selectedProject ? (
           <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Edit saved credentials</h3>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{tx(language, "Edit saved credentials", "تعديل البيانات المحفوظة")}</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Project: {selectedProject.name}</p>
             {editError ? (
               <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
@@ -628,7 +633,7 @@ export default function StoreAnalyticsPage() {
                 onClick={() => void onSaveCredentials()}
                 className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
               >
-                {savingEdit ? "Saving..." : "Save credentials"}
+                {savingEdit ? tx(language, "Saving...", "جار الحفظ...") : tx(language, "Save credentials", "حفظ البيانات")}
               </button>
             </div>
           </div>
@@ -641,7 +646,7 @@ export default function StoreAnalyticsPage() {
             onClick={() => void onAnalyze()}
             className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
           >
-            {loading ? "Analyzing…" : "Analyze"}
+            {loading ? tx(language, "Analyzing…", "جار التحليل...") : tx(language, "Analyze", "تحليل")}
           </button>
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">

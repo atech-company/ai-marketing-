@@ -34,7 +34,6 @@ export function GlobalTranslateToggle() {
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
 
   useEffect(() => {
@@ -63,7 +62,6 @@ export function GlobalTranslateToggle() {
     setLang(next);
     localStorage.setItem(LANG_KEY, next);
     document.documentElement.lang = next;
-    document.documentElement.dir = next === "ar" ? "rtl" : "ltr";
     setTranslateCookie(next);
     window.location.reload();
   }
