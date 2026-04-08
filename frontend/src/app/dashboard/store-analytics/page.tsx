@@ -92,7 +92,7 @@ export default function StoreAnalyticsPage() {
               onChange={(e) => setSourceType(e.target.value as "api" | "csv")}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             >
-              <option value="api">API (Shopify)</option>
+              <option value="api">API (Shopify / WooCommerce)</option>
               <option value="csv">CSV orders upload</option>
             </select>
           </div>
@@ -105,7 +105,7 @@ export default function StoreAnalyticsPage() {
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             >
               <option value="shopify">Shopify</option>
-              <option value="woocommerce">WooCommerce (not implemented yet)</option>
+              <option value="woocommerce">WooCommerce</option>
             </select>
           </div>
 
@@ -125,9 +125,14 @@ export default function StoreAnalyticsPage() {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Shopify Admin API access token"
+              placeholder={platform === "woocommerce" ? "ck_xxx|cs_xxx" : "Shopify Admin API access token"}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             />
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              {platform === "woocommerce"
+                ? 'WooCommerce format: "consumer_key|consumer_secret" (also supports ":" or "," separators).'
+                : "Shopify: use Admin API access token."}
+            </p>
           </div>
 
           <div className={sourceType === "csv" ? "" : "hidden"}>
