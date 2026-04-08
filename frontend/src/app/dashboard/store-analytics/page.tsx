@@ -9,21 +9,26 @@ function pct(value: number, total: number): number {
   return Math.max(0, Math.min(100, (value / total) * 100));
 }
 
-function money(n: number): string {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function money(n: number, locale: "en" | "ar" = "en"): string {
+  return n.toLocaleString(locale === "ar" ? "ar" : undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
-function categoryFromProductName(name: string): string {
+function categoryFromProductName(name: string, language: "en" | "ar" = "en"): string {
+  const label = (en: string, ar: string) => (language === "ar" ? ar : en);
   const lower = name.toLowerCase();
-  if (/(shirt|hoodie|jacket|pants|dress|shoes|sneaker|clothes|apparel)/.test(lower)) return "Apparel";
-  if (/(cream|serum|makeup|skin|cosmetic|beauty|lotion|shampoo)/.test(lower)) return "Beauty";
-  if (/(phone|case|charger|cable|headphone|laptop|keyboard|mouse|tech)/.test(lower)) return "Electronics";
-  if (/(protein|vitamin|supplement|omega|nutrition)/.test(lower)) return "Supplements";
-  if (/(home|kitchen|decor|furniture|lamp|bedding)/.test(lower)) return "Home";
-  return "Other";
+  if (/(shirt|hoodie|jacket|pants|dress|shoes|sneaker|clothes|apparel)/.test(lower)) return label("Apparel", "ملابس");
+  if (/(cream|serum|makeup|skin|cosmetic|beauty|lotion|shampoo)/.test(lower)) return label("Beauty", "جمال");
+  if (/(phone|case|charger|cable|headphone|laptop|keyboard|mouse|tech)/.test(lower)) return label("Electronics", "إلكترونيات");
+  if (/(protein|vitamin|supplement|omega|nutrition)/.test(lower)) return label("Supplements", "مكملات");
+  if (/(home|kitchen|decor|furniture|lamp|bedding)/.test(lower)) return label("Home", "منزل");
+  return label("Other", "أخرى");
 }
 
 export default function StoreAnalyticsPage() {
+  const [language, setLanguage] = useState<"en" | "ar">("en");
   const [moduleName, setModuleName] = useState("Store analytics");
   const [sourceType, setSourceType] = useState<"api" | "csv">("api");
   const [platform, setPlatform] = useState<"shopify" | "woocommerce">("shopify");
@@ -50,6 +55,7 @@ export default function StoreAnalyticsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<StoreAnalyticsResponse | null>(null);
+  const isArabic = language === "ar";
 
   useEffect(() => {
     if (sourceType !== "api") return;
@@ -121,12 +127,12 @@ export default function StoreAnalyticsPage() {
     const focus: string[] = [];
     if (top) {
       focus.push(
-        `Top revenue item is "${top.product_name}" (${money(top.revenue)}; ${concentration.toFixed(1)}% of revenue). Build campaigns around this product first.`,
+        `Top revenue item is "${top.product_name}" (${money(top.revenue, language)}; ${concentration.toFixed(1)}% of revenue). Build campaigns around this product first.`,
       );
     }
     if (second) {
       focus.push(
-        `Second strongest item is "${second.product_name}" (${money(second.revenue)}). Bundle it with the top item to raise AOV.`,
+        `Second strongest item is "${second.product_name}" (${money(second.revenue, language)}). Bundle it with the top item to raise AOV.`,
       );
     }
     if (repeatRate < 25) {
@@ -140,7 +146,7 @@ export default function StoreAnalyticsPage() {
     }
     if (bestCustomers[0]) {
       focus.push(
-        `Best customer segment starts with ${bestCustomers[0].customer_email} (${money(bestCustomers[0].spend)}). Use this profile for audience targeting.`,
+        `Best customer segment starts with ${bestCustomers[0].customer_email} (${money(bestCustomers[0].spend, language)}). Use this profile for audience targeting.`,
       );
     }
 
@@ -175,14 +181,14 @@ export default function StoreAnalyticsPage() {
     if (!result) return [];
     const map = new Map<string, number>();
     for (const p of result.stats.best_products) {
-      const cat = categoryFromProductName(p.product_name);
+      const cat = categoryFromProductName(p.product_name, language);
       map.set(cat, (map.get(cat) ?? 0) + p.revenue);
     }
     return Array.from(map.entries())
       .map(([category, revenue]) => ({ category, revenue }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 6);
-  }, [result]);
+  }, [language, result]);
 
   const segments = useMemo(() => {
     if (!result) return [];
@@ -195,7 +201,7 @@ export default function StoreAnalyticsPage() {
       }
       return { ...c, segment: "One-time Buyer" };
     });
-  }, [result]);
+  }, [language, result]);
 
   const bundleSuggestions = useMemo(() => {
     if (!result) return [];
@@ -338,6 +344,7 @@ export default function StoreAnalyticsPage() {
           throw new Error("Please select a project.");
         }
         const res = await api.storeAnalyticsAnalyzeProject(selectedProjectId, {
+          language,
           range_days: rangeDays,
           max_orders: maxOrders,
         });
@@ -347,6 +354,7 @@ export default function StoreAnalyticsPage() {
         const res = await api.storeAnalyticsAnalyzeCsv({
           module_name: moduleName.trim(),
           platform,
+          language,
           csv_file: csvFile,
           range_days: rangeDays,
           max_orders: maxOrders,
@@ -361,7 +369,7 @@ export default function StoreAnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div dir={isArabic ? "rtl" : "ltr"} lang={language} className="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Store analytics</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -378,6 +386,20 @@ export default function StoreAnalyticsPage() {
               onChange={(e) => setModuleName(e.target.value)}
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+              {isArabic ? "اللغة" : "Language"}
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as "en" | "ar")}
+              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+            </select>
           </div>
 
           <div>
@@ -651,7 +673,7 @@ export default function StoreAnalyticsPage() {
                 <div key={c.category} className="rounded-xl border border-zinc-100 p-3 dark:border-zinc-800">
                   <div className="mb-1 flex items-center justify-between">
                     <div className="text-sm font-medium">{c.category}</div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-300">{money(c.revenue)}</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-300">{money(c.revenue, language)}</div>
                   </div>
                   <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <div
@@ -676,7 +698,7 @@ export default function StoreAnalyticsPage() {
                 <div key={`${p.product_name}-${idx}`} className="rounded-xl border border-zinc-100 p-3 dark:border-zinc-800">
                   <div className="mb-1 flex items-center justify-between gap-3">
                     <div className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">{p.product_name}</div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-300">{money(p.revenue)}</div>
+                    <div className="text-xs text-zinc-600 dark:text-zinc-300">{money(p.revenue, language)}</div>
                   </div>
                   <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <div
@@ -801,7 +823,7 @@ export default function StoreAnalyticsPage() {
                     <tr key={`${c.customer_email}-${idx}`} className="border-t border-zinc-100 dark:border-zinc-800">
                       <td className="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{c.customer_email}</td>
                       <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{c.segment}</td>
-                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{money(c.spend)}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{money(c.spend, language)}</td>
                       <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{c.order_count}</td>
                     </tr>
                   ))}
@@ -918,7 +940,7 @@ export default function StoreAnalyticsPage() {
                   {result.stats.best_customers.map((c, idx) => (
                     <tr key={`${c.customer_email}-${idx}`} className="border-t border-zinc-100 dark:border-zinc-800">
                       <td className="px-4 py-3 font-medium text-zinc-800 dark:text-zinc-100">{c.customer_email}</td>
-                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{money(c.spend)}</td>
+                      <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{money(c.spend, language)}</td>
                       <td className="px-4 py-3 text-zinc-600 dark:text-zinc-300">{c.order_count}</td>
                     </tr>
                   ))}

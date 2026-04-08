@@ -241,6 +241,7 @@ export const api = {
     platform: "shopify" | "woocommerce";
     store_url: string;
     api_key: string;
+    language?: "en" | "ar";
     range_days?: number;
     max_orders?: number;
   }) =>
@@ -255,6 +256,7 @@ export const api = {
   storeAnalyticsAnalyzeProject: (
     projectId: number,
     body: {
+      language?: "en" | "ar";
       range_days?: number;
       max_orders?: number;
     },
@@ -268,6 +270,7 @@ export const api = {
     module_name: string;
     platform: "shopify" | "woocommerce";
     csv_file: File;
+    language?: "en" | "ar";
     range_days?: number;
     max_orders?: number;
   }) => {
@@ -275,6 +278,7 @@ export const api = {
     fd.append("module_name", body.module_name);
     fd.append("source_type", "csv");
     fd.append("platform", body.platform);
+    if (body.language) fd.append("language", body.language);
     fd.append("csv_file", body.csv_file);
     fd.append("range_days", String(body.range_days ?? 90));
     fd.append("max_orders", String(body.max_orders ?? 250));

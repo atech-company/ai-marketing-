@@ -125,6 +125,10 @@ export interface StoreAnalyticsResponse {
   module_name: string;
   platform: string;
   stats: StoreAnalyticsStats;
+  meta?: {
+    language?: "en" | "ar";
+    [key: string]: unknown;
+  };
   ai_discussion?: {
     executive_summary: string;
     focus_items: string[];
@@ -132,5 +136,4 @@ export interface StoreAnalyticsResponse {
     risks: string[];
     next_30_day_plan: string[];
   } | null;
-  meta?: Record<string, unknown>;
 }
