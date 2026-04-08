@@ -31,6 +31,41 @@ function tx(language: "en" | "ar", en: string, ar: string): string {
   return language === "ar" ? ar : en;
 }
 
+function CircleGauge({
+  value,
+  label,
+  colorClass,
+}: {
+  value: number;
+  label: string;
+  colorClass: string;
+}) {
+  const clamped = Math.max(0, Math.min(100, value));
+  const radius = 26;
+  const circumference = 2 * Math.PI * radius;
+  const dash = (clamped / 100) * circumference;
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+      <svg viewBox="0 0 64 64" className="h-20 w-20 -rotate-90">
+        <circle cx="32" cy="32" r={radius} stroke="currentColor" strokeWidth="6" fill="none" className="text-zinc-200 dark:text-zinc-800" />
+        <circle
+          cx="32"
+          cy="32"
+          r={radius}
+          stroke="currentColor"
+          strokeWidth="6"
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} ${circumference - dash}`}
+          className={colorClass}
+        />
+      </svg>
+      <div className="mt-1 text-sm font-semibold">{clamped.toFixed(1)}%</div>
+      <div className="text-center text-xs text-zinc-500 dark:text-zinc-400">{label}</div>
+    </div>
+  );
+}
+
 export default function StoreAnalyticsPage() {
   const [language, setLanguage] = useState<"en" | "ar">(() => {
     if (typeof window === "undefined") return "en";
@@ -307,6 +342,27 @@ export default function StoreAnalyticsPage() {
       currentRepeat,
       targetRepeat,
       top3Share,
+    };
+  }, [repeatRate, result]);
+
+  const extraMetrics = useMemo(() => {
+    if (!result) return null;
+    const totals = result.stats.totals;
+    const totalRevenue = totals.total_revenue || 0;
+    const totalOrders = totals.total_orders || 0;
+    const totalCustomers = totals.total_customers || 0;
+    const topCustomerSpend = result.stats.best_customers[0]?.spend ?? 0;
+    const topProductRevenue = result.stats.best_products[0]?.revenue ?? 0;
+    const revenuePerCustomer = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+    const ordersPerCustomer = totalCustomers > 0 ? totalOrders / totalCustomers : 0;
+    const repeatOrderGap = Math.max(0, 100 - repeatRate);
+    return {
+      revenuePerCustomer,
+      ordersPerCustomer,
+      topCustomerShare: pct(topCustomerSpend, totalRevenue),
+      topProductShare: pct(topProductRevenue, totalRevenue),
+      repeatRate,
+      repeatOrderGap,
     };
   }, [repeatRate, result]);
 
@@ -706,6 +762,56 @@ export default function StoreAnalyticsPage() {
               </div>
             </div>
           </section>
+
+          {extraMetrics ? (
+            <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Visual KPI circles + extra data</h2>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <CircleGauge value={extraMetrics.repeatRate} label="Repeat rate" colorClass="text-violet-600" />
+                <CircleGauge value={extraMetrics.topProductShare} label="Top product share" colorClass="text-emerald-600" />
+                <CircleGauge value={extraMetrics.topCustomerShare} label="Top customer share" colorClass="text-indigo-600" />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">Revenue per customer</div>
+                  <div className="mt-1 text-base font-semibold">{money(extraMetrics.revenuePerCustomer, language)}</div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">Orders per customer</div>
+                  <div className="mt-1 text-base font-semibold">{extraMetrics.ordersPerCustomer.toFixed(2)}</div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">Top customer concentration</div>
+                  <div className="mt-1 text-base font-semibold">{extraMetrics.topCustomerShare.toFixed(1)}%</div>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">Retention opportunity</div>
+                  <div className="mt-1 text-base font-semibold">{extraMetrics.repeatOrderGap.toFixed(1)}%</div>
+                </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Bar graph focus</div>
+                <div>
+                  <div className="mb-1 flex justify-between text-xs"><span>Repeat rate</span><span>{extraMetrics.repeatRate.toFixed(1)}%</span></div>
+                  <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="h-2 rounded-full bg-violet-600" style={{ width: `${extraMetrics.repeatRate}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1 flex justify-between text-xs"><span>Top product share</span><span>{extraMetrics.topProductShare.toFixed(1)}%</span></div>
+                  <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="h-2 rounded-full bg-emerald-600" style={{ width: `${extraMetrics.topProductShare}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1 flex justify-between text-xs"><span>Top customer share</span><span>{extraMetrics.topCustomerShare.toFixed(1)}%</span></div>
+                  <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                    <div className="h-2 rounded-full bg-indigo-600" style={{ width: `${extraMetrics.topCustomerShare}%` }} />
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Revenue by category (estimated)</h2>
