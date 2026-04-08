@@ -85,3 +85,42 @@ export interface PaginatedProjects {
     total: number;
   };
 }
+
+export interface StoreAnalyticsBestProduct {
+  product_id: string | null;
+  product_name: string;
+  revenue: number;
+  quantity: number;
+  order_count: number;
+}
+
+export interface StoreAnalyticsBestCustomer {
+  customer_email: string;
+  spend: number;
+  order_count: number;
+  first_order_date: string | null;
+  last_order_date: string | null;
+}
+
+export interface StoreAnalyticsTotals {
+  total_revenue: number;
+  total_orders: number;
+  total_customers: number;
+  average_order_value: number;
+  new_customers: number;
+  returning_customers: number;
+}
+
+export interface StoreAnalyticsStats {
+  totals: StoreAnalyticsTotals;
+  best_products: StoreAnalyticsBestProduct[];
+  best_customers: StoreAnalyticsBestCustomer[];
+  revenue_by_day: Array<{ date: string; revenue: number }>;
+}
+
+export interface StoreAnalyticsResponse {
+  module_name: string;
+  platform: string;
+  stats: StoreAnalyticsStats;
+  meta?: Record<string, unknown>;
+}

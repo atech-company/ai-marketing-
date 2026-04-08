@@ -37,6 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { href: "/dashboard", label: "Projects" },
       { href: "/dashboard/projects/new", label: "New analysis" },
       { href: "/dashboard/social-templates", label: "Social templates" },
+      { href: "/dashboard/store-analytics", label: "Store analytics" },
       ...(isAdmin ? [{ href: "/dashboard/admin/users", label: "Admin · Users" }, { href: "/dashboard/admin/projects", label: "Admin · Projects" }] : []),
     ],
     [isAdmin],

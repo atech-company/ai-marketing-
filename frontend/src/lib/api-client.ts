@@ -3,6 +3,7 @@ import type {
   AdminUserRow,
   PaginatedProjects,
   Project,
+  StoreAnalyticsResponse,
   User,
 } from "@/types/api";
 import type { SocialTemplatesPack } from "@/types/social-templates";
@@ -105,6 +106,31 @@ function extractMessage(payload: unknown, fallback: string): string {
   return fallback;
 }
 
+async function apiFetchFormData<T>(path: string, formData: FormData): Promise<T> {
+  const base = apiBase();
+  const segment = path.startsWith("/") ? path.slice(1) : path;
+  const url = new URL(segment, `${base}/api/`).href;
+  const token = getStoredToken();
+  const headers = new Headers();
+  headers.set("Accept", "application/json");
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const res = await fetch(url, { method: "POST", headers, body: formData });
+  const payload = await parseJson(res);
+
+  if (!res.ok) {
+    throw new ApiError(
+      extractMessage(payload, res.statusText),
+      res.status,
+      payload,
+    );
+  }
+
+  return payload as T;
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit & { token?: string | null } = {},
@@ -195,4 +221,37 @@ export const api = {
 
   adminDeleteProject: (id: number) =>
     apiFetch<{ message: string }>(`/admin/projects/${id}`, { method: "DELETE" }),
+
+  storeAnalyticsAnalyzeApi: (body: {
+    module_name: string;
+    platform: "shopify" | "woocommerce";
+    store_url: string;
+    api_key: string;
+    range_days?: number;
+    max_orders?: number;
+  }) =>
+    apiFetch<{ data: StoreAnalyticsResponse }>("/store-analytics/analyze", {
+      method: "POST",
+      body: JSON.stringify({
+        ...body,
+        source_type: "api",
+      }),
+    }),
+
+  storeAnalyticsAnalyzeCsv: (body: {
+    module_name: string;
+    platform: "shopify" | "woocommerce";
+    csv_file: File;
+    range_days?: number;
+    max_orders?: number;
+  }) => {
+    const fd = new FormData();
+    fd.append("module_name", body.module_name);
+    fd.append("source_type", "csv");
+    fd.append("platform", body.platform);
+    fd.append("csv_file", body.csv_file);
+    fd.append("range_days", String(body.range_days ?? 90));
+    fd.append("max_orders", String(body.max_orders ?? 250));
+    return apiFetchFormData<{ data: StoreAnalyticsResponse }>("/store-analytics/analyze", fd);
+  },
 };
