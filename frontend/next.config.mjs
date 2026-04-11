@@ -8,7 +8,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
 
-  // Used by `next dev` only when you run dev with Turbopack. Production uses `next build --webpack` for stable chunk output on static hosts.
+  /** Minimal server trace for Hostinger / Docker-style Node deploys (optional; see server.js + postbuild). */
+  output: "standalone",
+
+  // `next dev` can use Turbopack. Use `next build --webpack` in CI/Windows; plain `next build` may pick Turbopack and fail without native SWC.
   turbopack: {
     root: path.join(__dirname),
   },
