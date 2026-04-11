@@ -18,6 +18,12 @@ const handle = app.getRequestHandler();
 app.prepare()
   .then(() => {
     createServer((req, res) => {
+      const url = req.url || "";
+      // Do not let intermediaries cache HTML/RSC while old deployments had different chunk names.
+      if (!url.startsWith("/_next/static/") && !url.startsWith("/_next/image")) {
+        res.setHeader("Cache-Control", "private, no-cache, no-store, must-revalidate");
+        res.setHeader("CDN-Cache-Control", "no-store");
+      }
       handle(req, res).catch((err) => {
         console.error("[next] request handler error", err);
         if (!res.headersSent) {
