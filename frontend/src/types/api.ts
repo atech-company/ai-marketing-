@@ -70,6 +70,8 @@ export interface Project {
   store_platform?: "shopify" | "woocommerce" | null;
   store_url?: string | null;
   has_store_config?: boolean;
+  ai_provider?: "openai" | "gemini" | null;
+  has_ai_config?: boolean;
   status: ProjectStatus;
   error_message: string | null;
   created_at: string | null;

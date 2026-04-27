@@ -123,6 +123,14 @@ export default function ProjectDetailPage() {
           <Link href="/dashboard" className="text-sm font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400">
             ← Projects
           </Link>
+          <div className="mt-2">
+            <Link
+              href={`/dashboard/projects/${project.id}/settings`}
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+            >
+              Project settings
+            </Link>
+          </div>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight">{project.name}</h1>
           <p className="mt-1 break-all text-sm text-zinc-500 dark:text-zinc-400">{project.website_url}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">

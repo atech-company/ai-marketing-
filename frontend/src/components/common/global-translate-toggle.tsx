@@ -27,10 +27,12 @@ function loadGoogleTranslateScript(): void {
 }
 
 export function GlobalTranslateToggle() {
-  const [lang, setLang] = useState<UiLanguage>(() => {
-    if (typeof window === "undefined") return "en";
-    return localStorage.getItem(LANG_KEY) === "ar" ? "ar" : "en";
-  });
+  const [lang, setLang] = useState<UiLanguage>("en");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(LANG_KEY) === "ar" ? "ar" : "en";
+    setLang(saved);
+  }, []);
 
   useEffect(() => {
     document.documentElement.lang = lang;

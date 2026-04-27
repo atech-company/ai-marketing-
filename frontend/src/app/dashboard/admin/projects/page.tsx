@@ -28,7 +28,7 @@ export default function AdminProjectsPage() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disab-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function renameProject(id: number, current: string) {

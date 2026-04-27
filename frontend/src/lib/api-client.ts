@@ -182,6 +182,8 @@ export const api = {
     store_platform?: "shopify" | "woocommerce";
     store_url?: string;
     store_api_key?: string;
+    ai_provider?: "openai" | "gemini";
+    ai_api_key?: string;
   }) =>
     apiFetch<{ data: Project }>("/projects", { method: "POST", body: JSON.stringify(body) }),
 
@@ -194,6 +196,8 @@ export const api = {
       store_platform?: "shopify" | "woocommerce";
       store_url?: string;
       store_api_key?: string;
+      ai_provider?: "openai" | "gemini";
+      ai_api_key?: string;
     },
   ) =>
     apiFetch<{ data: Project }>(`/projects/${id}`, { method: "PATCH", body: JSON.stringify(body) }),

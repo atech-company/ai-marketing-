@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
 import type { Project, StoreAnalyticsResponse } from "@/types/api";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 function pct(value: number, total: number): number {
   if (total <= 0) return 0;
@@ -73,8 +75,6 @@ export default function StoreAnalyticsPage() {
     return stored === "ar" ? "ar" : "en";
   });
   const [moduleName, setModuleName] = useState("Store analytics");
-  const [sourceType, setSourceType] = useState<"api" | "csv">("api");
-  const [platform, setPlatform] = useState<"shopify" | "woocommerce">("shopify");
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | "">("");
   const [showCreateProject, setShowCreateProject] = useState(false);
@@ -90,7 +90,6 @@ export default function StoreAnalyticsPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [completedPlanItems, setCompletedPlanItems] = useState<Record<string, boolean>>({});
-  const [csvFile, setCsvFile] = useState<File | null>(null);
 
   const [rangeDays, setRangeDays] = useState(90);
   const [maxOrders, setMaxOrders] = useState(250);
@@ -101,7 +100,6 @@ export default function StoreAnalyticsPage() {
   const isArabic = language === "ar";
 
   useEffect(() => {
-    if (sourceType !== "api") return;
     let active = true;
     (async () => {
       try {
@@ -120,7 +118,7 @@ export default function StoreAnalyticsPage() {
     return () => {
       active = false;
     };
-  }, [selectedProjectId, sourceType]);
+  }, [selectedProjectId]);
 
   async function onCreateProjectWithCredentials() {
     setCreateProjectError(null);
@@ -129,7 +127,7 @@ export default function StoreAnalyticsPage() {
       const res = await api.createProject({
         name: newProjectName.trim(),
         website_url: newWebsiteUrl.trim(),
-        store_platform: platform,
+        store_platform: "shopify",
         store_url: newStoreUrl.trim(),
         store_api_key: newStoreApiKey.trim(),
       });
@@ -151,11 +149,8 @@ export default function StoreAnalyticsPage() {
   const canAnalyze = useMemo(() => {
     if (!moduleName.trim()) return false;
     if (rangeDays < 1 || maxOrders < 1) return false;
-    if (sourceType === "api") {
-      return typeof selectedProjectId === "number";
-    }
-    return csvFile !== null;
-  }, [csvFile, maxOrders, moduleName, rangeDays, selectedProjectId, sourceType]);
+    return typeof selectedProjectId === "number";
+  }, [maxOrders, moduleName, rangeDays, selectedProjectId]);
 
   const aiDiscussion = useMemo(() => {
     if (!result) return null;
@@ -402,9 +397,9 @@ export default function StoreAnalyticsPage() {
 
   useEffect(() => {
     if (!selectedProject) return;
-    setPlatform((selectedProject.store_platform as "shopify" | "woocommerce") ?? "shopify");
     setEditStoreUrl(selectedProject.store_url ?? "");
     setEditStoreApiKey("");
+    setModuleName((prev) => (prev === "Store analytics" ? `${selectedProject.name} analytics` : prev));
   }, [selectedProject]);
 
   async function onSaveCredentials() {
@@ -413,7 +408,7 @@ export default function StoreAnalyticsPage() {
     setEditError(null);
     try {
       const res = await api.updateProject(selectedProject.id, {
-        store_platform: platform,
+        store_platform: (selectedProject.store_platform as "shopify" | "woocommerce") ?? "shopify",
         store_url: editStoreUrl.trim(),
         store_api_key: editStoreApiKey.trim(),
       });
@@ -435,28 +430,15 @@ export default function StoreAnalyticsPage() {
     setResult(null);
 
     try {
-      if (sourceType === "api") {
-        if (typeof selectedProjectId !== "number") {
-          throw new Error("Please select a project.");
-        }
-        const res = await api.storeAnalyticsAnalyzeProject(selectedProjectId, {
-          language,
-          range_days: rangeDays,
-          max_orders: maxOrders,
-        });
-        setResult(res.data);
-      } else {
-        if (!csvFile) throw new Error("CSV file is missing.");
-        const res = await api.storeAnalyticsAnalyzeCsv({
-          module_name: moduleName.trim(),
-          platform,
-          language,
-          csv_file: csvFile,
-          range_days: rangeDays,
-          max_orders: maxOrders,
-        });
-        setResult(res.data);
+      if (typeof selectedProjectId !== "number") {
+        throw new Error("Please select a project.");
       }
+      const res = await api.storeAnalyticsAnalyzeProject(selectedProjectId, {
+        language,
+        range_days: rangeDays,
+        max_orders: maxOrders,
+      });
+      setResult(res.data);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Analysis failed.");
     } finally {
@@ -469,7 +451,10 @@ export default function StoreAnalyticsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{tx(language, "Store analytics", "تحليل المتجر")}</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          {tx(language, "Select a project with saved store credentials, then click ", "اختر مشروعا محفوظا ببيانات المتجر ثم اضغط ")}
+          {tx(language, "One-time setup: save credentials in a project, then all users can run analytics from that project.", "إعداد مرة واحدة: احفظ بيانات المتجر داخل المشروع، ثم يمكن لجميع المستخدمين التحليل من نفس المشروع.")}
+        </p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {tx(language, "Select project and click ", "اختر المشروع ثم اضغط ")}
           <strong>{tx(language, "Analyze", "تحليل")}</strong>.
         </p>
       </div>
@@ -500,30 +485,6 @@ export default function StoreAnalyticsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Source type", "نوع المصدر")}</label>
-            <select
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as "api" | "csv")}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
-            >
-              <option value="api">{tx(language, "API (Shopify / WooCommerce)", "واجهة API (شوبيفاي / ووكومرس)")}</option>
-              <option value="csv">{tx(language, "CSV orders upload", "رفع CSV للطلبات")}</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Platform", "المنصة")}</label>
-            <select
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value as "shopify" | "woocommerce")}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
-            >
-              <option value="shopify">Shopify</option>
-              <option value="woocommerce">WooCommerce</option>
-            </select>
-          </div>
-
-          <div className={sourceType === "api" ? "" : "hidden"}>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Project", "المشروع")}</label>
             <select
               value={selectedProjectId}
@@ -540,7 +501,7 @@ export default function StoreAnalyticsPage() {
                 ))}
             </select>
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              {tx(language, "Only projects with saved store URL + API key are listed. Add these in Create Project.", "يتم عرض المشاريع التي تحتوي على رابط المتجر ومفتاح API فقط. أضفها عند إنشاء المشروع.")}
+              {tx(language, "Only projects with saved store URL + API key are listed.", "يتم عرض المشاريع التي تحتوي على رابط المتجر ومفتاح API فقط.")}
             </p>
             <button
               type="button"
@@ -566,20 +527,6 @@ export default function StoreAnalyticsPage() {
             ) : null}
           </div>
 
-          <div className={sourceType === "csv" ? "" : "hidden"}>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "CSV file", "ملف CSV")}</label>
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              onChange={(e) => setCsvFile(e.target.files?.[0] ?? null)}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
-            />
-            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Required headers: <code>order_id</code>, <code>order_date</code>, <code>customer_email</code>,{" "}
-              <code>product_name</code>, <code>quantity</code>, <code>line_total</code>
-            </p>
-          </div>
-
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Range (days)", "المدة (بالأيام)")}</label>
             <input
@@ -601,7 +548,7 @@ export default function StoreAnalyticsPage() {
           </div>
         </div>
 
-        {sourceType === "api" && showCreateProject ? (
+        {showCreateProject ? (
           <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{tx(language, "Create project (with store credentials)", "إنشاء مشروع (مع بيانات المتجر)")}</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -635,7 +582,7 @@ export default function StoreAnalyticsPage() {
                 type="password"
                 value={newStoreApiKey}
                 onChange={(e) => setNewStoreApiKey(e.target.value)}
-                placeholder={platform === "woocommerce" ? "ck_xxx|cs_xxx" : "Shopify API token"}
+                placeholder="API key / token"
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             </div>
@@ -658,7 +605,7 @@ export default function StoreAnalyticsPage() {
           </div>
         ) : null}
 
-        {sourceType === "api" && showEditCredentials && selectedProject ? (
+        {showEditCredentials && selectedProject ? (
           <div className="mt-5 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{tx(language, "Edit saved credentials", "تعديل البيانات المحفوظة")}</h3>
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Project: {selectedProject.name}</p>
@@ -709,6 +656,49 @@ export default function StoreAnalyticsPage() {
             We compute totals, product/customer rankings, concentration, and repeat customer indicators.
           </p>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Store analysis history
+          </h2>
+          <Link href="/dashboard" className="text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-400">
+            View all projects
+          </Link>
+        </div>
+
+        {projects.filter((p) => p.has_store_config).length === 0 ? (
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">No store analyses yet.</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {projects
+              .filter((p) => p.has_store_config)
+              .slice(0, 10)
+              .map((p) => (
+                <li
+                  key={p.id}
+                  className="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">{p.name}</p>
+                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                      {p.store_platform ?? "store"} - {p.store_url ?? p.website_url}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={p.status} />
+                    <Link
+                      href={`/dashboard/projects/${p.id}`}
+                      className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                      Open
+                    </Link>
+                  </div>
+                </li>
+              ))}
+          </ul>
+        )}
       </section>
 
       {error && (
