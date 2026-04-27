@@ -179,7 +179,7 @@ export const api = {
   createProject: (body: {
     name: string;
     website_url: string;
-    store_platform?: "shopify" | "woocommerce";
+    store_platform?: "shopify" | "woocommerce" | "custom";
     store_url?: string;
     store_api_key?: string;
     ai_provider?: "openai" | "gemini";
@@ -193,7 +193,7 @@ export const api = {
     id: number,
     body: {
       name?: string;
-      store_platform?: "shopify" | "woocommerce";
+      store_platform?: "shopify" | "woocommerce" | "custom";
       store_url?: string;
       store_api_key?: string;
       ai_provider?: "openai" | "gemini";
@@ -242,7 +242,7 @@ export const api = {
 
   storeAnalyticsAnalyzeApi: (body: {
     module_name: string;
-    platform: "shopify" | "woocommerce";
+    platform: "shopify" | "woocommerce" | "custom";
     store_url: string;
     api_key: string;
     language?: "en" | "ar";
@@ -272,7 +272,7 @@ export const api = {
 
   storeAnalyticsAnalyzeCsv: (body: {
     module_name: string;
-    platform: "shopify" | "woocommerce";
+    platform: "shopify" | "woocommerce" | "custom";
     csv_file: File;
     language?: "en" | "ar";
     range_days?: number;

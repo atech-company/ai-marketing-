@@ -80,11 +80,13 @@ export default function StoreAnalyticsPage() {
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [newStorePlatform, setNewStorePlatform] = useState<"shopify" | "woocommerce" | "custom">("shopify");
   const [newStoreUrl, setNewStoreUrl] = useState("");
   const [newStoreApiKey, setNewStoreApiKey] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
   const [createProjectError, setCreateProjectError] = useState<string | null>(null);
   const [showEditCredentials, setShowEditCredentials] = useState(false);
+  const [editStorePlatform, setEditStorePlatform] = useState<"shopify" | "woocommerce" | "custom">("shopify");
   const [editStoreUrl, setEditStoreUrl] = useState("");
   const [editStoreApiKey, setEditStoreApiKey] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
@@ -127,7 +129,7 @@ export default function StoreAnalyticsPage() {
       const res = await api.createProject({
         name: newProjectName.trim(),
         website_url: newWebsiteUrl.trim(),
-        store_platform: "shopify",
+        store_platform: newStorePlatform,
         store_url: newStoreUrl.trim(),
         store_api_key: newStoreApiKey.trim(),
       });
@@ -137,6 +139,7 @@ export default function StoreAnalyticsPage() {
       setShowCreateProject(false);
       setNewProjectName("");
       setNewWebsiteUrl("");
+      setNewStorePlatform("shopify");
       setNewStoreUrl("");
       setNewStoreApiKey("");
     } catch (e) {
@@ -397,6 +400,7 @@ export default function StoreAnalyticsPage() {
 
   useEffect(() => {
     if (!selectedProject) return;
+    setEditStorePlatform((selectedProject.store_platform as "shopify" | "woocommerce" | "custom") ?? "shopify");
     setEditStoreUrl(selectedProject.store_url ?? "");
     setEditStoreApiKey("");
     setModuleName((prev) => (prev === "Store analytics" ? `${selectedProject.name} analytics` : prev));
@@ -408,7 +412,7 @@ export default function StoreAnalyticsPage() {
     setEditError(null);
     try {
       const res = await api.updateProject(selectedProject.id, {
-        store_platform: (selectedProject.store_platform as "shopify" | "woocommerce") ?? "shopify",
+        store_platform: editStorePlatform,
         store_url: editStoreUrl.trim(),
         store_api_key: editStoreApiKey.trim(),
       });
@@ -560,6 +564,15 @@ export default function StoreAnalyticsPage() {
               </p>
             ) : null}
             <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <select
+                value={newStorePlatform}
+                onChange={(e) => setNewStorePlatform(e.target.value as "shopify" | "woocommerce" | "custom")}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              >
+                <option value="shopify">Shopify</option>
+                <option value="woocommerce">WordPress / WooCommerce</option>
+                <option value="custom">Custom website</option>
+              </select>
               <input
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
@@ -582,7 +595,13 @@ export default function StoreAnalyticsPage() {
                 type="password"
                 value={newStoreApiKey}
                 onChange={(e) => setNewStoreApiKey(e.target.value)}
-                placeholder="API key / token"
+                placeholder={
+                  newStorePlatform === "woocommerce"
+                    ? "Consumer key|Consumer secret"
+                    : newStorePlatform === "custom"
+                      ? "Bearer token / API token"
+                      : "Shopify access token"
+                }
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             </div>
@@ -615,6 +634,15 @@ export default function StoreAnalyticsPage() {
               </p>
             ) : null}
             <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <select
+                value={editStorePlatform}
+                onChange={(e) => setEditStorePlatform(e.target.value as "shopify" | "woocommerce" | "custom")}
+                className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
+              >
+                <option value="shopify">Shopify</option>
+                <option value="woocommerce">WordPress / WooCommerce</option>
+                <option value="custom">Custom website</option>
+              </select>
               <input
                 value={editStoreUrl}
                 onChange={(e) => setEditStoreUrl(e.target.value)}
@@ -625,7 +653,13 @@ export default function StoreAnalyticsPage() {
                 type="password"
                 value={editStoreApiKey}
                 onChange={(e) => setEditStoreApiKey(e.target.value)}
-                placeholder="New API key / token"
+                placeholder={
+                  editStorePlatform === "woocommerce"
+                    ? "New consumer key|secret"
+                    : editStorePlatform === "custom"
+                      ? "New bearer/api token"
+                      : "New API key / token"
+                }
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             </div>

@@ -12,7 +12,7 @@ export default function ProjectSettingsPage() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [name, setName] = useState("");
-  const [platform, setPlatform] = useState<"shopify" | "woocommerce">("shopify");
+  const [platform, setPlatform] = useState<"shopify" | "woocommerce" | "custom">("shopify");
   const [storeUrl, setStoreUrl] = useState("");
   const [storeApiKey, setStoreApiKey] = useState("");
   const [aiProvider, setAiProvider] = useState<"openai" | "gemini">("openai");
@@ -31,7 +31,7 @@ export default function ProjectSettingsPage() {
         const p = res.data;
         setProject(p);
         setName(p.name);
-        setPlatform((p.store_platform as "shopify" | "woocommerce") ?? "shopify");
+        setPlatform((p.store_platform as "shopify" | "woocommerce" | "custom") ?? "shopify");
         setStoreUrl(p.store_url ?? "");
         setAiProvider((p.ai_provider as "openai" | "gemini") ?? "openai");
       } catch (e) {
@@ -53,7 +53,7 @@ export default function ProjectSettingsPage() {
     try {
       const body: {
         name?: string;
-        store_platform?: "shopify" | "woocommerce";
+        store_platform?: "shopify" | "woocommerce" | "custom";
         store_url?: string;
         store_api_key?: string;
         ai_provider?: "openai" | "gemini";
@@ -127,11 +127,12 @@ export default function ProjectSettingsPage() {
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Platform</label>
               <select
                 value={platform}
-                onChange={(e) => setPlatform(e.target.value as "shopify" | "woocommerce")}
+                onChange={(e) => setPlatform(e.target.value as "shopify" | "woocommerce" | "custom")}
                 className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               >
                 <option value="shopify">Shopify</option>
                 <option value="woocommerce">WooCommerce</option>
+                <option value="custom">Custom website</option>
               </select>
             </div>
             <div>

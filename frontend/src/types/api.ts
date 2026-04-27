@@ -67,7 +67,7 @@ export interface Project {
   name: string;
   user?: { id: number; name: string; email: string } | null;
   website_url: string;
-  store_platform?: "shopify" | "woocommerce" | null;
+  store_platform?: "shopify" | "woocommerce" | "custom" | null;
   store_url?: string | null;
   has_store_config?: boolean;
   ai_provider?: "openai" | "gemini" | null;
