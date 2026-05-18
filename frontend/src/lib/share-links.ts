@@ -67,9 +67,7 @@ export function buildShareUrl(
     case "x":
       return `https://twitter.com/intent/tweet?text=${text}`;
     case "facebook":
-      // Do not use sharer.php — it only creates link shares (crawler can hang on "Posting…")
-      // and Meta no longer honors the deprecated `quote` param. Users paste the copied caption.
-      return "https://www.facebook.com/";
+      return buildFacebookSharerUrl(pageUrl);
     case "linkedin":
       return `https://www.linkedin.com/sharing/share-offsite/?url=${u}&summary=${encodeURIComponent(
         buildFullShareText(body, pageUrl, imageUrls).slice(0, 1500),
@@ -196,4 +194,70 @@ async function fetchImagesAsFiles(urls: string[]): Promise<File[]> {
 /** Clipboard: always includes every image URL (no length cap). */
 export function buildCaptionForClipboard(body: string, pageUrl: string, imageUrls?: string[]): string {
   return buildFullShareText(body, pageUrl, imageUrls);
+}
+
+/** Link-only share dialog — Facebook crawls `pageUrl` for preview (no deprecated `quote`). */
+export function buildFacebookSharerUrl(pageUrl: string): string {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+}
+
+/** Optional Meta Share Dialog when NEXT_PUBLIC_FACEBOOK_APP_ID is set. */
+export function buildFacebookDialogShareUrl(pageUrl: string): string | null {
+  const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
+  if (!appId) return null;
+  const href = encodeURIComponent(pageUrl);
+  return `https://www.facebook.com/dialog/share?app_id=${encodeURIComponent(appId)}&display=popup&href=${href}`;
+}
+
+function isMobileUserAgent(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+export type FacebookShareResult = "shared" | "cancelled" | "unavailable";
+
+/**
+ * System share sheet (text + link [+ images]). Prefer openFacebookSharer when you need
+ * Facebook to crawl the page for a link preview.
+ */
+export async function shareToFacebook(
+  body: string,
+  pageUrl: string,
+  imageUrls?: string[],
+  title?: string,
+): Promise<FacebookShareResult> {
+  if (typeof navigator === "undefined" || !navigator.share) {
+    return "unavailable";
+  }
+  const text = buildPlainShareText(body, pageUrl);
+  const shareData: ShareData = { title: title ?? "Post", text, url: pageUrl };
+
+  const files = imageUrls?.length ? await fetchImagesAsFiles(imageUrls.slice(0, 4)) : [];
+  if (files.length > 0 && navigator.canShare?.({ ...shareData, files })) {
+    try {
+      await navigator.share({ ...shareData, files });
+      return "shared";
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return "cancelled";
+    }
+  }
+
+  try {
+    await navigator.share(shareData);
+    return "shared";
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") return "cancelled";
+    return "unavailable";
+  }
+}
+
+/** Open Facebook link share (mobile: same-tab deep link works better than popup). */
+export function openFacebookSharer(pageUrl: string): void {
+  const dialog = buildFacebookDialogShareUrl(pageUrl);
+  const url = dialog ?? buildFacebookSharerUrl(pageUrl);
+  if (isMobileUserAgent()) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 }

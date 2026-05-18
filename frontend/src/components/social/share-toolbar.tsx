@@ -5,6 +5,7 @@ import {
   buildCaptionForClipboard,
   buildPlainShareText,
   buildShareUrl,
+  openFacebookSharer,
   shareImagesWithPlainCaption,
   shareNative,
   shareNativeWithImageFiles,
@@ -47,23 +48,30 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
     }
   }, [body, pageUrl, resolvedImageUrls, showToast]);
 
-  /** Facebook & LinkedIn: copy full text first, then open share window — paste (Ctrl+V) in their box. */
-  const copyThenOpen = useCallback(
-    async (platform: "facebook" | "linkedin") => {
-      try {
-        await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
-      } catch {
-        /* still open */
-      }
-      open(buildShareUrl(platform, body, pageUrl, resolvedImageUrls));
-      showToast(
-        platform === "facebook"
-          ? "Caption copied. On Facebook, click “What’s on your mind?”, paste (Ctrl+V), then Post. (We open your feed — not the old link-sharer that can get stuck.)"
-          : "Caption copied. In LinkedIn, paste (Ctrl+V) into the post editor.",
-      );
-    },
-    [body, pageUrl, resolvedImageUrls, open, showToast],
-  );
+  const shareFacebook = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
+    } catch {
+      /* still try share */
+    }
+
+    // Link sharer: Facebook crawls pageUrl for title/image preview (mobile app + desktop).
+    openFacebookSharer(pageUrl);
+    showToast(
+      "Facebook share opened with your page link (preview loads from that URL). Caption copied — paste in the post if your AI text isn’t shown.",
+    );
+  }, [body, pageUrl, resolvedImageUrls, showToast]);
+
+  /** LinkedIn: copy full text first, then open share window — paste (Ctrl+V) in their box. */
+  const copyThenOpenLinkedIn = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
+    } catch {
+      /* still open */
+    }
+    open(buildShareUrl("linkedin", body, pageUrl, resolvedImageUrls));
+    showToast("Caption copied. In LinkedIn, paste (Ctrl+V) into the post editor.");
+  }, [body, pageUrl, resolvedImageUrls, open, showToast]);
 
   const shareWhatsApp = useCallback(async () => {
     if (resolvedImageUrls?.length) {
@@ -109,8 +117,9 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         </p>
       )}
       <p className="mb-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> opens your feed with the
-        caption copied — paste into “What’s on your mind?” (the old link-sharer often hangs on Posting…).{" "}
+        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> uses your phone’s share sheet
+        when available (pick Facebook there), otherwise opens Facebook’s link share so it can fetch your page preview.
+        Caption is always copied as backup.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">LinkedIn</strong> opens their share dialog;
         paste your caption there.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">WhatsApp / Instagram</strong> use your caption +
@@ -140,10 +149,10 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         <button type="button" className={btn} onClick={() => open(buildShareUrl("x", body, pageUrl, resolvedImageUrls))}>
           X
         </button>
-        <button type="button" className={btn} onClick={() => void copyThenOpen("facebook")}>
+        <button type="button" className={btn} onClick={() => void shareFacebook()}>
           Facebook
         </button>
-        <button type="button" className={btn} onClick={() => void copyThenOpen("linkedin")}>
+        <button type="button" className={btn} onClick={() => void copyThenOpenLinkedIn()}>
           LinkedIn
         </button>
         <button
