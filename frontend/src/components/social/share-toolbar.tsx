@@ -67,19 +67,21 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
       );
       return;
     }
-    if (outcome.reason === "invalid-url") {
+    if (!outcome.ok) {
+      if (outcome.reason === "invalid-url") {
+        showToast(
+          "Need a public https:// page URL (not localhost) for Facebook previews. Caption copied — paste into the Facebook app.",
+        );
+        return;
+      }
+      if (outcome.reason === "cancelled") {
+        showToast("Share cancelled. Caption is still copied.");
+        return;
+      }
       showToast(
-        "Need a public https:// page URL (not localhost) for Facebook previews. Caption copied — paste into the Facebook app.",
+        "Caption copied. Open the Facebook app → create post → paste. (Web link-share often gets stuck on Posting — use Device share or the app instead.)",
       );
-      return;
     }
-    if (outcome.reason === "cancelled") {
-      showToast("Share cancelled. Caption is still copied.");
-      return;
-    }
-    showToast(
-      "Caption copied. Open the Facebook app → create post → paste. (Web link-share often gets stuck on Posting — use Device share or the app instead.)",
-    );
   }, [body, pageUrl, resolvedImageUrls, platformHint, showToast]);
 
   /** LinkedIn: copy full text first, then open share window — paste (Ctrl+V) in their box. */

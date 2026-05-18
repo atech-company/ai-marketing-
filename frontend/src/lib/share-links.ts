@@ -298,7 +298,7 @@ export async function runFacebookShare(
   const href = normalizePageUrlForShare(pageUrl);
   if (!href) return { ok: false, reason: "invalid-url" };
 
-  if (typeof navigator !== "undefined" && navigator.share) {
+  if (typeof navigator !== "undefined" && "share" in navigator) {
     const native = await shareToFacebook(body, href, imageUrls, title);
     if (native === "shared") return { ok: true, method: "native" };
     if (native === "cancelled") return { ok: false, reason: "cancelled" };
