@@ -58,7 +58,7 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
       open(buildShareUrl(platform, body, pageUrl, resolvedImageUrls));
       showToast(
         platform === "facebook"
-          ? "Caption copied. In the Facebook window, click the post box and paste (Ctrl+V) — the link is already in your caption."
+          ? "Caption copied. On Facebook, click “What’s on your mind?”, paste (Ctrl+V), then Post. (We open your feed — not the old link-sharer that can get stuck.)"
           : "Caption copied. In LinkedIn, paste (Ctrl+V) into the post editor.",
       );
     },
@@ -109,10 +109,10 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         </p>
       )}
       <p className="mb-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook / LinkedIn</strong> only take the
-        website link in the share URL — the big preview image comes from <em>their</em> servers reading that site. Use{" "}
-        <strong className="font-medium">Copy caption</strong> first, then our buttons copy your text and open the
-        window so you can <strong className="font-medium">paste</strong> your AI caption.{" "}
+        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> opens your feed with the
+        caption copied — paste into “What’s on your mind?” (the old link-sharer often hangs on Posting…).{" "}
+        <strong className="font-medium text-zinc-600 dark:text-zinc-300">LinkedIn</strong> opens their share dialog;
+        paste your caption there.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">WhatsApp / Instagram</strong> use your caption +
         link only (no image URLs in text); when the browser allows, we attach fetched images as files. If attach fails
         (common cross-origin), add photos manually in the app.

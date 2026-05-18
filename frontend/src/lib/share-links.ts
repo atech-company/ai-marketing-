@@ -66,10 +66,10 @@ export function buildShareUrl(
   switch (platform) {
     case "x":
       return `https://twitter.com/intent/tweet?text=${text}`;
-    case "facebook": {
-      const quote = encodeURIComponent(buildFullShareText(body, pageUrl, imageUrls).slice(0, 2000));
-      return `https://www.facebook.com/sharer/sharer.php?u=${u}&quote=${quote}`;
-    }
+    case "facebook":
+      // Do not use sharer.php — it only creates link shares (crawler can hang on "Posting…")
+      // and Meta no longer honors the deprecated `quote` param. Users paste the copied caption.
+      return "https://www.facebook.com/";
     case "linkedin":
       return `https://www.linkedin.com/sharing/share-offsite/?url=${u}&summary=${encodeURIComponent(
         buildFullShareText(body, pageUrl, imageUrls).slice(0, 1500),
