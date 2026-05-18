@@ -198,7 +198,6 @@ export function buildCaptionForClipboard(body: string, pageUrl: string, imageUrl
 
 const FB_BLOCKED_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
 
-/** Public http(s) URL Facebook can crawl — rejects localhost and invalid input. */
 export function normalizePageUrlForShare(pageUrl: string): string | null {
   try {
     const raw = pageUrl.trim();
@@ -212,41 +211,42 @@ export function normalizePageUrlForShare(pageUrl: string): string | null {
   }
 }
 
-/** Legacy sharer endpoint (not /sharer/sharer.php — that route often breaks Comet composer). */
+/**
+ * Web link share — posts to the logged-in user's personal profile only.
+ * Facebook Pages cannot be targeted via sharer.php (Meta limitation).
+ */
 export function buildFacebookSharerUrl(pageUrl: string): string {
   const u = encodeURIComponent(pageUrl);
-  if (isMobileUserAgent()) {
-    return `https://m.facebook.com/sharer.php?u=${u}`;
-  }
   return `https://www.facebook.com/sharer.php?u=${u}`;
 }
 
-/** Optional Meta Share Dialog when NEXT_PUBLIC_FACEBOOK_APP_ID is set. */
-export function buildFacebookDialogShareUrl(pageUrl: string): string | null {
-  const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
-  if (!appId) return null;
-  const href = encodeURIComponent(pageUrl);
-  return `https://www.facebook.com/dialog/share?app_id=${encodeURIComponent(appId)}&display=popup&href=${href}`;
+/** Meta Business Suite — create posts on Facebook Pages you manage. */
+export const META_BUSINESS_SUITE_URL = "https://business.facebook.com/latest/composer";
+
+export function openFacebookPersonalSharer(pageUrl: string): boolean {
+  const href = normalizePageUrlForShare(pageUrl);
+  if (!href) return false;
+  const popup = window.open(buildFacebookSharerUrl(href), "_blank", "noopener,noreferrer,width=600,height=700");
+  return popup !== null;
 }
 
-function isMobileUserAgent(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+export function openMetaBusinessSuite(): void {
+  window.open(META_BUSINESS_SUITE_URL, "_blank", "noopener,noreferrer");
 }
+
+export type FacebookShareOutcome =
+  | { ok: true; method: "native" | "sharer" }
+  | { ok: false; reason: "invalid-url" | "cancelled" | "manual" };
 
 export type FacebookShareResult = "shared" | "cancelled" | "unavailable";
 
-/**
- * System share sheet (text + link [+ images]). Prefer openFacebookSharer when you need
- * Facebook to crawl the page for a link preview.
- */
-export async function shareToFacebook(
+export async function shareToFacebookNative(
   body: string,
   pageUrl: string,
   imageUrls?: string[],
   title?: string,
 ): Promise<FacebookShareResult> {
-  if (typeof navigator === "undefined" || !navigator.share) {
+  if (typeof navigator === "undefined" || !("share" in navigator)) {
     return "unavailable";
   }
   const text = buildPlainShareText(body, pageUrl);
@@ -271,25 +271,8 @@ export async function shareToFacebook(
   }
 }
 
-/** Open Facebook link share in a new window (same-tab navigation breaks their Comet composer). */
-export function openFacebookSharer(pageUrl: string): boolean {
-  const href = normalizePageUrlForShare(pageUrl);
-  if (!href) return false;
-  const dialog = buildFacebookDialogShareUrl(href);
-  const url = dialog ?? buildFacebookSharerUrl(href);
-  const popup = window.open(url, "_blank", "noopener,noreferrer,width=600,height=700");
-  return popup !== null;
-}
-
-export type FacebookShareOutcome =
-  | { ok: true; method: "native" | "sharer" }
-  | { ok: false; reason: "invalid-url" | "cancelled" | "manual" };
-
-/**
- * Facebook share flow: system share sheet first (avoids web composer Relay bug),
- * desktop-only fallback to link sharer popup.
- */
-export async function runFacebookShare(
+/** Personal profile: device share sheet, then desktop link sharer. */
+export async function runFacebookPersonalShare(
   body: string,
   pageUrl: string,
   imageUrls?: string[],
@@ -299,18 +282,15 @@ export async function runFacebookShare(
   if (!href) return { ok: false, reason: "invalid-url" };
 
   if (typeof navigator !== "undefined" && "share" in navigator) {
-    const native = await shareToFacebook(body, href, imageUrls, title);
+    const native = await shareToFacebookNative(body, href, imageUrls, title);
     if (native === "shared") return { ok: true, method: "native" };
     if (native === "cancelled") return { ok: false, reason: "cancelled" };
   }
 
-  // Mobile web sharer often hits ShareToFeedComposerCometDialogQuery infinite suspend — skip it.
-  if (isMobileUserAgent()) {
-    return { ok: false, reason: "manual" };
-  }
+  const mobile =
+    typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  if (mobile) return { ok: false, reason: "manual" };
 
-  if (openFacebookSharer(href)) {
-    return { ok: true, method: "sharer" };
-  }
+  if (openFacebookPersonalSharer(href)) return { ok: true, method: "sharer" };
   return { ok: false, reason: "manual" };
 }

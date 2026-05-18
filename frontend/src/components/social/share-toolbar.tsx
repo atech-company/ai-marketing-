@@ -5,7 +5,8 @@ import {
   buildCaptionForClipboard,
   buildPlainShareText,
   buildShareUrl,
-  runFacebookShare,
+  openMetaBusinessSuite,
+  runFacebookPersonalShare,
   shareImagesWithPlainCaption,
   shareNative,
   shareNativeWithImageFiles,
@@ -48,43 +49,49 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
     }
   }, [body, pageUrl, resolvedImageUrls, showToast]);
 
-  const shareFacebook = useCallback(async () => {
+  const shareFacebookProfile = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
     } catch {
       /* still try share */
     }
 
-    const outcome = await runFacebookShare(body, pageUrl, resolvedImageUrls, platformHint);
+    const outcome = await runFacebookPersonalShare(body, pageUrl, resolvedImageUrls, platformHint);
 
     if (outcome.ok && outcome.method === "native") {
-      showToast("Pick Facebook in the share sheet. Caption is copied if you need to paste in the app.");
+      showToast("Pick Facebook in the share sheet. Posts to your personal profile — not a Facebook Page.");
       return;
     }
     if (outcome.ok && outcome.method === "sharer") {
-      showToast(
-        "Facebook link share opened in a new tab. Caption copied — paste if needed. If it loops on Posting, close that tab and use Device or the Facebook app.",
-      );
+      showToast("Link share opened (personal profile only). Caption copied — paste if needed.");
       return;
     }
     if (!outcome.ok) {
       if (outcome.reason === "invalid-url") {
-        showToast(
-          "Need a public https:// page URL (not localhost) for Facebook previews. Caption copied — paste into the Facebook app.",
-        );
+        showToast("Need a public https:// URL. Caption copied — paste in Facebook manually.");
         return;
       }
       if (outcome.reason === "cancelled") {
         showToast("Share cancelled. Caption is still copied.");
         return;
       }
-      showToast(
-        "Caption copied. Open the Facebook app → create post → paste. (Web link-share often gets stuck on Posting — use Device share or the app instead.)",
-      );
     }
+    showToast("Caption copied. Paste in Facebook while on your personal profile (not a Page).");
   }, [body, pageUrl, resolvedImageUrls, platformHint, showToast]);
 
-  /** LinkedIn: copy full text first, then open share window — paste (Ctrl+V) in their box. */
+  const shareFacebookPage = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
+    } catch {
+      showToast("Could not copy — select the text above and copy manually.");
+      return;
+    }
+    openMetaBusinessSuite();
+    showToast(
+      "Caption copied. In Meta Business Suite, select your Facebook Page → paste in the composer → Post. Web share cannot post to Pages automatically.",
+    );
+  }, [body, pageUrl, resolvedImageUrls, showToast]);
+
   const copyThenOpenLinkedIn = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(buildCaptionForClipboard(body, pageUrl, resolvedImageUrls));
@@ -139,9 +146,9 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         </p>
       )}
       <p className="mb-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> uses your device share sheet
-        (pick Facebook) — web link-share often loops on Posting (Facebook bug). Use <strong className="font-medium">Device</strong> or
-        paste the copied caption in the app. Desktop may open link-share in a new tab.{" "}
+        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook (profile)</strong> only posts to your
+        personal timeline — that is a Meta limit, not our app. For a <strong className="font-medium">Facebook Page</strong>,
+        use <strong className="font-medium">FB Page</strong> (Meta Business Suite) and paste the caption.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">LinkedIn</strong> opens their share dialog;
         paste your caption there.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">WhatsApp / Instagram</strong> use your caption +
@@ -171,8 +178,16 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         <button type="button" className={btn} onClick={() => open(buildShareUrl("x", body, pageUrl, resolvedImageUrls))}>
           X
         </button>
-        <button type="button" className={btn} onClick={() => void shareFacebook()}>
+        <button type="button" className={btn} onClick={() => void shareFacebookProfile()} title="Personal profile only">
           Facebook
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => void shareFacebookPage()}
+          title="Post on a Facebook Page you manage"
+        >
+          FB Page
         </button>
         <button type="button" className={btn} onClick={() => void copyThenOpenLinkedIn()}>
           LinkedIn
