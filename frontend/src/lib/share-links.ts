@@ -196,9 +196,29 @@ export function buildCaptionForClipboard(body: string, pageUrl: string, imageUrl
   return buildFullShareText(body, pageUrl, imageUrls);
 }
 
-/** Link-only share dialog — Facebook crawls `pageUrl` for preview (no deprecated `quote`). */
+const FB_BLOCKED_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
+
+/** Public http(s) URL Facebook can crawl — rejects localhost and invalid input. */
+export function normalizePageUrlForShare(pageUrl: string): string | null {
+  try {
+    const raw = pageUrl.trim();
+    if (!raw) return null;
+    const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    if (FB_BLOCKED_HOSTS.has(url.hostname.toLowerCase())) return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+/** Legacy sharer endpoint (not /sharer/sharer.php — that route often breaks Comet composer). */
 export function buildFacebookSharerUrl(pageUrl: string): string {
-  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+  const u = encodeURIComponent(pageUrl);
+  if (isMobileUserAgent()) {
+    return `https://m.facebook.com/sharer.php?u=${u}`;
+  }
+  return `https://www.facebook.com/sharer.php?u=${u}`;
 }
 
 /** Optional Meta Share Dialog when NEXT_PUBLIC_FACEBOOK_APP_ID is set. */
@@ -251,13 +271,46 @@ export async function shareToFacebook(
   }
 }
 
-/** Open Facebook link share (mobile: same-tab deep link works better than popup). */
-export function openFacebookSharer(pageUrl: string): void {
-  const dialog = buildFacebookDialogShareUrl(pageUrl);
-  const url = dialog ?? buildFacebookSharerUrl(pageUrl);
-  if (isMobileUserAgent()) {
-    window.location.assign(url);
-  } else {
-    window.open(url, "_blank", "noopener,noreferrer");
+/** Open Facebook link share in a new window (same-tab navigation breaks their Comet composer). */
+export function openFacebookSharer(pageUrl: string): boolean {
+  const href = normalizePageUrlForShare(pageUrl);
+  if (!href) return false;
+  const dialog = buildFacebookDialogShareUrl(href);
+  const url = dialog ?? buildFacebookSharerUrl(href);
+  const popup = window.open(url, "_blank", "noopener,noreferrer,width=600,height=700");
+  return popup !== null;
+}
+
+export type FacebookShareOutcome =
+  | { ok: true; method: "native" | "sharer" }
+  | { ok: false; reason: "invalid-url" | "cancelled" | "manual" };
+
+/**
+ * Facebook share flow: system share sheet first (avoids web composer Relay bug),
+ * desktop-only fallback to link sharer popup.
+ */
+export async function runFacebookShare(
+  body: string,
+  pageUrl: string,
+  imageUrls?: string[],
+  title?: string,
+): Promise<FacebookShareOutcome> {
+  const href = normalizePageUrlForShare(pageUrl);
+  if (!href) return { ok: false, reason: "invalid-url" };
+
+  if (typeof navigator !== "undefined" && navigator.share) {
+    const native = await shareToFacebook(body, href, imageUrls, title);
+    if (native === "shared") return { ok: true, method: "native" };
+    if (native === "cancelled") return { ok: false, reason: "cancelled" };
   }
+
+  // Mobile web sharer often hits ShareToFeedComposerCometDialogQuery infinite suspend — skip it.
+  if (isMobileUserAgent()) {
+    return { ok: false, reason: "manual" };
+  }
+
+  if (openFacebookSharer(href)) {
+    return { ok: true, method: "sharer" };
+  }
+  return { ok: false, reason: "manual" };
 }

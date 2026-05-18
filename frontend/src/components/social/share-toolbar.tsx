@@ -5,7 +5,7 @@ import {
   buildCaptionForClipboard,
   buildPlainShareText,
   buildShareUrl,
-  openFacebookSharer,
+  runFacebookShare,
   shareImagesWithPlainCaption,
   shareNative,
   shareNativeWithImageFiles,
@@ -55,12 +55,32 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
       /* still try share */
     }
 
-    // Link sharer: Facebook crawls pageUrl for title/image preview (mobile app + desktop).
-    openFacebookSharer(pageUrl);
+    const outcome = await runFacebookShare(body, pageUrl, resolvedImageUrls, platformHint);
+
+    if (outcome.ok && outcome.method === "native") {
+      showToast("Pick Facebook in the share sheet. Caption is copied if you need to paste in the app.");
+      return;
+    }
+    if (outcome.ok && outcome.method === "sharer") {
+      showToast(
+        "Facebook link share opened in a new tab. Caption copied — paste if needed. If it loops on Posting, close that tab and use Device or the Facebook app.",
+      );
+      return;
+    }
+    if (outcome.reason === "invalid-url") {
+      showToast(
+        "Need a public https:// page URL (not localhost) for Facebook previews. Caption copied — paste into the Facebook app.",
+      );
+      return;
+    }
+    if (outcome.reason === "cancelled") {
+      showToast("Share cancelled. Caption is still copied.");
+      return;
+    }
     showToast(
-      "Facebook share opened with your page link (preview loads from that URL). Caption copied — paste in the post if your AI text isn’t shown.",
+      "Caption copied. Open the Facebook app → create post → paste. (Web link-share often gets stuck on Posting — use Device share or the app instead.)",
     );
-  }, [body, pageUrl, resolvedImageUrls, showToast]);
+  }, [body, pageUrl, resolvedImageUrls, platformHint, showToast]);
 
   /** LinkedIn: copy full text first, then open share window — paste (Ctrl+V) in their box. */
   const copyThenOpenLinkedIn = useCallback(async () => {
@@ -117,9 +137,9 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         </p>
       )}
       <p className="mb-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> uses your phone’s share sheet
-        when available (pick Facebook there), otherwise opens Facebook’s link share so it can fetch your page preview.
-        Caption is always copied as backup.{" "}
+        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook</strong> uses your device share sheet
+        (pick Facebook) — web link-share often loops on Posting (Facebook bug). Use <strong className="font-medium">Device</strong> or
+        paste the copied caption in the app. Desktop may open link-share in a new tab.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">LinkedIn</strong> opens their share dialog;
         paste your caption there.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">WhatsApp / Instagram</strong> use your caption +
