@@ -5,7 +5,7 @@ import {
   buildCaptionForClipboard,
   buildPlainShareText,
   buildShareUrl,
-  openMetaBusinessSuite,
+  runFacebookPageShare,
   runFacebookPersonalShare,
   shareImagesWithPlainCaption,
   shareNative,
@@ -20,12 +20,23 @@ type Props = {
   /** @deprecated Prefer `imageUrls` — single image is treated as `[imageUrl]`. */
   imageUrl?: string;
   platformHint?: string;
+  /** When true (Facebook template card), primary button targets Page posting, not personal profile. */
+  preferFacebookPage?: boolean;
 };
 
 const btn =
   "rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700";
 
-export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint }: Props) {
+export function ShareToolbar({
+  body,
+  pageUrl,
+  imageUrl,
+  imageUrls,
+  platformHint,
+  preferFacebookPage = false,
+}: Props) {
+  const isFacebookCard =
+    preferFacebookPage || platformHint?.toLowerCase() === "facebook";
   const [toast, setToast] = useState<string | null>(null);
 
   const resolvedImageUrls =
@@ -86,11 +97,35 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
       showToast("Could not copy — select the text above and copy manually.");
       return;
     }
-    openMetaBusinessSuite();
+
+    const outcome = await runFacebookPageShare(body, pageUrl, resolvedImageUrls, platformHint);
+
+    if (outcome.ok && outcome.method === "sharer") {
+      showToast(
+        "Meta share dialog opened — choose your Facebook Page at the top, then paste your caption (Ctrl+V) and Post.",
+      );
+      return;
+    }
+    if (outcome.ok && outcome.method === "native") {
+      showToast(
+        "In the Facebook app: switch to your Page (menu → your Page name) → paste the copied caption → Post.",
+      );
+      return;
+    }
+    if (!outcome.ok) {
+      if (outcome.reason === "invalid-url") {
+        showToast("Need a public https:// URL. Caption copied.");
+        return;
+      }
+      if (outcome.reason === "cancelled") {
+        showToast("Share cancelled. Caption is still copied.");
+        return;
+      }
+    }
     showToast(
-      "Caption copied. In Meta Business Suite, select your Facebook Page → paste in the composer → Post. Web share cannot post to Pages automatically.",
+      "Caption copied. In Meta Business Suite: pick your Page → paste in the composer → Post. (Or switch to your Page in the Facebook app and paste.)",
     );
-  }, [body, pageUrl, resolvedImageUrls, showToast]);
+  }, [body, pageUrl, resolvedImageUrls, platformHint, showToast]);
 
   const copyThenOpenLinkedIn = useCallback(async () => {
     try {
@@ -145,10 +180,26 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
           {toast}
         </p>
       )}
+      {isFacebookCard && (
+        <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] leading-snug text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <strong className="font-semibold">Facebook Page (not personal profile)</strong>
+          <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+            <li>Tap <strong>Post to Page</strong> — caption copies automatically.</li>
+            <li>In Facebook or Business Suite, <strong>select your Page</strong> (switch profile if needed).</li>
+            <li><strong>Paste</strong> the caption → add photos from your gallery if needed → Post.</li>
+          </ol>
+          <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+            The normal Facebook link-sharer only works on a personal profile. Pages always need paste + Page selected.
+          </p>
+        </div>
+      )}
       <p className="mb-2 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">
-        <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook (profile)</strong> only posts to your
-        personal timeline — that is a Meta limit, not our app. For a <strong className="font-medium">Facebook Page</strong>,
-        use <strong className="font-medium">FB Page</strong> (Meta Business Suite) and paste the caption.{" "}
+        {!isFacebookCard && (
+          <>
+            <strong className="font-medium text-zinc-600 dark:text-zinc-300">Facebook (profile)</strong> uses personal
+            timeline only. Use <strong className="font-medium">Post to Page</strong> for a business Page.{" "}
+          </>
+        )}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">LinkedIn</strong> opens their share dialog;
         paste your caption there.{" "}
         <strong className="font-medium text-zinc-600 dark:text-zinc-300">WhatsApp / Instagram</strong> use your caption +
@@ -178,17 +229,35 @@ export function ShareToolbar({ body, pageUrl, imageUrl, imageUrls, platformHint 
         <button type="button" className={btn} onClick={() => open(buildShareUrl("x", body, pageUrl, resolvedImageUrls))}>
           X
         </button>
-        <button type="button" className={btn} onClick={() => void shareFacebookProfile()} title="Personal profile only">
-          Facebook
-        </button>
-        <button
-          type="button"
-          className={btn}
-          onClick={() => void shareFacebookPage()}
-          title="Post on a Facebook Page you manage"
-        >
-          FB Page
-        </button>
+        {isFacebookCard ? (
+          <>
+            <button
+              type="button"
+              className={`${btn} border-violet-300 bg-violet-50 font-semibold text-violet-800 dark:border-violet-500/40 dark:bg-violet-500/15 dark:text-violet-100`}
+              onClick={() => void shareFacebookPage()}
+              title="Post on a Facebook Page you manage"
+            >
+              Post to Page
+            </button>
+            <button
+              type="button"
+              className={btn}
+              onClick={() => void shareFacebookProfile()}
+              title="Personal profile only"
+            >
+              Profile only
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className={btn} onClick={() => void shareFacebookProfile()} title="Personal profile">
+              Facebook
+            </button>
+            <button type="button" className={btn} onClick={() => void shareFacebookPage()} title="Facebook Page">
+              Post to Page
+            </button>
+          </>
+        )}
         <button type="button" className={btn} onClick={() => void copyThenOpenLinkedIn()}>
           LinkedIn
         </button>

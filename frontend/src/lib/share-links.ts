@@ -223,6 +223,34 @@ export function buildFacebookSharerUrl(pageUrl: string): string {
 /** Meta Business Suite — create posts on Facebook Pages you manage. */
 export const META_BUSINESS_SUITE_URL = "https://business.facebook.com/latest/composer";
 
+function getShareSiteOrigin(): string {
+  if (typeof window !== "undefined") return window.location.origin;
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  return fromEnv ? fromEnv.replace(/\/$/, "") : "";
+}
+
+/**
+ * Meta Share Dialog — user can choose a Facebook Page they manage (requires app_id in env).
+ * Register redirect URI: https://YOUR_DOMAIN/share/facebook
+ */
+export function buildFacebookShareDialogUrl(pageUrl: string): string | null {
+  const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
+  if (!appId) return null;
+  const href = normalizePageUrlForShare(pageUrl);
+  if (!href) return null;
+  const origin = getShareSiteOrigin();
+  if (!origin) return null;
+  const redirectUri = encodeURIComponent(`${origin}/share/facebook`);
+  return `https://www.facebook.com/dialog/share?app_id=${encodeURIComponent(appId)}&display=popup&href=${encodeURIComponent(href)}&redirect_uri=${redirectUri}`;
+}
+
+export function openFacebookShareDialog(pageUrl: string): boolean {
+  const url = buildFacebookShareDialogUrl(pageUrl);
+  if (!url) return false;
+  const popup = window.open(url, "_blank", "noopener,noreferrer,width=640,height=720");
+  return popup !== null;
+}
+
 export function openFacebookPersonalSharer(pageUrl: string): boolean {
   const href = normalizePageUrlForShare(pageUrl);
   if (!href) return false;
@@ -231,7 +259,38 @@ export function openFacebookPersonalSharer(pageUrl: string): boolean {
 }
 
 export function openMetaBusinessSuite(): void {
-  window.open(META_BUSINESS_SUITE_URL, "_blank", "noopener,noreferrer");
+  const mobile =
+    typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const url = mobile ? "https://business.facebook.com/" : META_BUSINESS_SUITE_URL;
+  if (mobile) {
+    window.location.assign(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+/** Facebook Page: Share Dialog (if configured) → device share → Business Suite. */
+export async function runFacebookPageShare(
+  body: string,
+  pageUrl: string,
+  imageUrls?: string[],
+  title?: string,
+): Promise<FacebookShareOutcome> {
+  const href = normalizePageUrlForShare(pageUrl);
+  if (!href) return { ok: false, reason: "invalid-url" };
+
+  if (openFacebookShareDialog(href)) {
+    return { ok: true, method: "sharer" };
+  }
+
+  if (typeof navigator !== "undefined" && "share" in navigator) {
+    const native = await shareToFacebookNative(body, href, imageUrls, title);
+    if (native === "shared") return { ok: true, method: "native" };
+    if (native === "cancelled") return { ok: false, reason: "cancelled" };
+  }
+
+  openMetaBusinessSuite();
+  return { ok: false, reason: "manual" };
 }
 
 export type FacebookShareOutcome =

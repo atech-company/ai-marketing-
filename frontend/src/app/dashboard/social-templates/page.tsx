@@ -342,6 +342,7 @@ export default function SocialTemplatesPage() {
                   pageUrl={pack.source_url}
                   imageUrls={templateImageUrls}
                   platformHint={c.title}
+                  preferFacebookPage={c.id === "facebook"}
                 />
               </section>
             ))}
