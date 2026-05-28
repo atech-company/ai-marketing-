@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_NAME } from "@/lib/brand";
 
 /** OAuth redirect target for Meta Share Dialog (whitelist this URL in your Meta app). */
 export default function FacebookShareCompletePage() {
@@ -6,7 +7,7 @@ export default function FacebookShareCompletePage() {
     <main className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Facebook share</h1>
       <p className="text-sm text-zinc-600 dark:text-zinc-300">
-        You can close this tab and return to AI Marketing Discovery.
+        You can close this tab and return to {APP_NAME}.
       </p>
       <Link
         href="/dashboard/social-templates"

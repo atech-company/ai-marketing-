@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_NAME } from "@/lib/brand";
 import { NavIcon } from "@/components/ui/design-system";
 
 const stats = [
@@ -152,7 +153,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-violet-50/40 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-violet-950/30 dark:text-zinc-50">
       <header className="sticky top-0 z-40 border-b border-zinc-200/60 bg-white/80 backdrop-blur-lg dark:border-zinc-800/80 dark:bg-zinc-950/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-sm font-semibold tracking-tight">AI Marketing Discovery</span>
+          <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
           <nav className="hidden items-center gap-6 text-sm text-zinc-600 md:flex dark:text-zinc-400">
             <a href="#how-it-works" className="hover:text-zinc-900 dark:hover:text-zinc-100">
               How it works
@@ -187,13 +188,13 @@ export default function HomePage() {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div>
               <p className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium uppercase tracking-widest text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
-                AI marketing platform
+                {APP_NAME} platform
               </p>
               <h1 className="mt-5 text-4xl font-semibold tracking-tight md:text-5xl md:leading-tight">
                 Turn any website into a complete marketing strategy—in minutes, not weeks.
               </h1>
               <p className="mt-6 text-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
-                AI Marketing Discovery crawls your site, understands your brand and products, then delivers positioning,
+                {APP_NAME} crawls your site, understands your brand and products, then delivers positioning,
                 campaigns, social content, ad copy, and homepage improvements you can use immediately. Built for stores,
                 agencies, and growth teams who need depth without hiring a full content team.
               </p>
@@ -445,7 +446,7 @@ export default function HomePage() {
           <div className="rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 px-8 py-12 text-center text-white shadow-xl shadow-violet-600/25 md:px-16">
             <h2 className="text-2xl font-semibold md:text-3xl">Ready to analyze your first website?</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-violet-100 md:text-base">
-              Join teams using AI Marketing Discovery to go from URL to campaigns, copy, and growth ideas in one workflow.
+              Join teams using {APP_NAME} to go from URL to campaigns, copy, and growth ideas in one workflow.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
@@ -467,7 +468,7 @@ export default function HomePage() {
 
       <footer className="border-t border-zinc-200/80 py-10 dark:border-zinc-800">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-zinc-500 md:flex-row dark:text-zinc-400">
-          <span>© {new Date().getFullYear()} AI Marketing Discovery</span>
+          <span>© {new Date().getFullYear()} {APP_NAME}</span>
           <div className="flex gap-6">
             <Link href="/login" className="hover:text-zinc-800 dark:hover:text-zinc-200">
               Log in

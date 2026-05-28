@@ -1,4 +1,4 @@
-# AI Marketing — frontend (Next.js)
+# Fikr AI — frontend (Next.js)
 
 This repository contains **only** the **Next.js** dashboard. The **Laravel API** is **not** included here (use a separate repo or restore from Git history before `backend/` was removed).
 

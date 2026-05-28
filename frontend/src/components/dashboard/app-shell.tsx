@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api, getStoredUser, setStoredToken, setStoredUser } from "@/lib/api-client";
+import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { NavIcon } from "@/components/ui/design-system";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -98,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/65 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70 md:flex md:flex-col">
         <div className="flex h-16 items-center border-b border-zinc-200/80 px-6 dark:border-zinc-800">
           <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
-            AI Marketing Discovery
+            {APP_NAME}
           </Link>
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3">
@@ -141,11 +142,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-zinc-200/80 bg-white/70 px-4 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/65 md:px-8">
           <div className="flex items-center gap-3 md:hidden">
             <Link href="/dashboard" className="text-sm font-semibold">
-              AI Discovery
+              {APP_NAME}
             </Link>
           </div>
           <div className="hidden text-sm text-zinc-500 dark:text-zinc-400 md:block">
-            Turn any website into marketing direction.
+            {APP_TAGLINE}
           </div>
           <div className="flex items-center gap-2">
             <button

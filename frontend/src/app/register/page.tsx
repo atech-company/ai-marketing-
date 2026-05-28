@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ApiError, api, setStoredToken, setStoredUser } from "@/lib/api-client";
+import { APP_NAME } from "@/lib/brand";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function RegisterPage() {
       <div className="mx-auto w-full max-w-md space-y-8">
         <div className="text-center">
           <Link href="/" className="text-sm font-semibold text-violet-600 dark:text-violet-400">
-            AI Marketing Discovery
+            {APP_NAME}
           </Link>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight">Create your account</h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Start analyzing websites in minutes.</p>
