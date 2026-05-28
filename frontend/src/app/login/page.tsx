@@ -29,7 +29,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
+    <div className="flex min-h-screen flex-col justify-center px-4">
       <div className="mx-auto w-full max-w-md space-y-8">
         <div className="text-center">
           <Link href="/" className="text-sm font-semibold text-violet-600 dark:text-violet-400">
@@ -40,7 +40,7 @@ export default function LoginPage() {
         </div>
         <form
           onSubmit={(e) => void onSubmit(e)}
-          className="space-y-4 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60"
+          className="glass-card animate-enter-fade space-y-4 rounded-2xl p-6"
         >
           {error && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
 import type { Project } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -54,7 +55,10 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-5xl space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <NavIcon name="projects" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+            Projects
+          </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Each project captures a website crawl plus AI marketing outputs.{" "}
             <span className="text-zinc-600 dark:text-zinc-300">
@@ -66,18 +70,24 @@ export default function DashboardPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/dashboard/projects/new"
-            className="inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 transition hover:bg-violet-500"
+            className="ds-btn ds-btn-primary"
           >
             Analyze website
           </Link>
           <Link
             href="/dashboard/store-analytics"
-            className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            className="ds-btn ds-btn-ghost"
           >
             Store analytics
           </Link>
         </div>
       </div>
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Total projects" value={String(projects.length)} icon="projects" />
+        <StatCard title="Completed" value={String(projects.filter((p) => p.status === "done").length)} icon="growth" />
+        <StatCard title="Processing" value={String(projects.filter((p) => p.status === "running").length)} icon="analytics" />
+        <StatCard title="Failed" value={String(projects.filter((p) => p.status === "failed").length)} icon="orders" />
+      </section>
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
@@ -111,7 +121,7 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+        <div className="ds-surface overflow-hidden">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-zinc-200 bg-zinc-50/80 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
               <tr>
@@ -168,14 +178,14 @@ export default function DashboardPage() {
                       <div className="inline-flex gap-2">
                         <Link
                           href={href}
-                          className="inline-flex rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20"
+                          className="ds-btn border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-violet-800 hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/20"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Open
                         </Link>
                         <Link
                           href={`/dashboard/projects/${p.id}/settings`}
-                          className="inline-flex rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Settings

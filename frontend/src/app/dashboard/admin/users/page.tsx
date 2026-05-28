@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api-client";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 import type { AdminUserRow } from "@/types/api";
 
 export default function AdminUsersPage() {
@@ -90,9 +91,16 @@ export default function AdminUsersPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin · Users</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="users" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          Admin · Users
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Create users, reset passwords, and delete accounts.</p>
       </div>
+      <section className="grid gap-3 sm:grid-cols-2">
+        <StatCard title="Total users" value={String(rows.length)} icon="users" />
+        <StatCard title="Admins" value={String(rows.filter((u) => u.is_admin).length)} icon="adminProjects" />
+      </section>
 
       {error && (
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
@@ -100,7 +108,7 @@ export default function AdminUsersPage() {
         </p>
       )}
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface p-5">
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Add user</h2>
         <div className="mt-3 grid gap-3 md:grid-cols-4">
           <input
@@ -135,13 +143,13 @@ export default function AdminUsersPage() {
           type="button"
           disabled={busy || !canSubmit}
           onClick={() => void createUser()}
-          className="mt-3 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="ds-btn ds-btn-primary mt-3 disabled:opacity-60"
         >
           Create user
         </button>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-950/50 dark:text-zinc-400">
             <tr>
@@ -165,7 +173,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={busy}
                       onClick={() => void resetPassword(u.id)}
-                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs dark:border-zinc-700"
+                      className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs"
                     >
                       Reset password
                     </button>
@@ -173,7 +181,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={busy}
                       onClick={() => void deleteUser(u.id)}
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-700 dark:border-rose-500/40 dark:text-rose-200"
+                      className="ds-btn rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-700 dark:border-rose-500/40 dark:text-rose-200"
                     >
                       Delete
                     </button>

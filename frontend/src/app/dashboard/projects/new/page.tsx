@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
 import type { Project } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 function inferProjectName(rawUrl: string): string {
   const value = rawUrl.trim();
@@ -73,13 +74,24 @@ export default function NewProjectPage() {
         >
           ← Back to projects
         </Link>
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight">Analyze website</h1>
+        <h1 className="mt-4 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="analyze" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          Analyze website
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Enter website URL only. We create the project and start analysis immediately.
         </p>
       </div>
+      <section className="grid gap-3 sm:grid-cols-2">
+        <StatCard title="External analyses" value={String(history.length)} icon="projects" />
+        <StatCard
+          title="Running now"
+          value={String(history.filter((p) => p.status === "pending" || p.status === "crawling" || p.status === "analyzing").length)}
+          icon="analytics"
+        />
+      </section>
 
-      <form onSubmit={(e) => void onSubmit(e)} className="space-y-5 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <form onSubmit={(e) => void onSubmit(e)} className="ds-surface space-y-5 p-6">
         {error && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
             {error}
@@ -102,13 +114,13 @@ export default function NewProjectPage() {
         <button
           type="submit"
           disabled={submitting || !websiteUrl.trim()}
-          className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 transition hover:bg-violet-500 disabled:opacity-60"
+          className="ds-btn ds-btn-primary w-full py-2.5 disabled:opacity-60"
         >
           {submitting ? "Analyzing..." : "Analyze now"}
         </button>
       </form>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface p-6">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Outside website history
@@ -137,7 +149,7 @@ export default function NewProjectPage() {
                   <StatusBadge status={p.status} />
                   <Link
                     href={`/dashboard/projects/${p.id}`}
-                    className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    className="ds-btn ds-btn-ghost px-2.5 py-1 text-xs"
                   >
                     Open
                   </Link>

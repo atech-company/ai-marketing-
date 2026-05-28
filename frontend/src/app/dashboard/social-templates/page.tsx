@@ -10,6 +10,7 @@ import {
   formatYoutubeBlock,
 } from "@/types/social-templates";
 import { ShareToolbar } from "@/components/social/share-toolbar";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 type PlatformCard = {
   id: string;
@@ -154,7 +155,10 @@ export default function SocialTemplatesPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Social media templates</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="templates" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          Social media templates
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Paste a <strong className="font-medium text-zinc-700 dark:text-zinc-300">product or page URL</strong>. We read
           the page, pull <strong className="font-medium text-zinc-700 dark:text-zinc-300">images</strong> (Open Graph,
@@ -165,10 +169,7 @@ export default function SocialTemplatesPage() {
         </p>
       </div>
 
-      <form
-        onSubmit={(e) => void onSubmit(e)}
-        className="space-y-4 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60"
-      >
+      <form onSubmit={(e) => void onSubmit(e)} className="ds-surface space-y-4 p-6">
         {error && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
             {error}
@@ -262,7 +263,7 @@ export default function SocialTemplatesPage() {
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+          className="ds-btn ds-btn-primary disabled:opacity-60"
         >
           {loading ? "Generating…" : "Generate templates"}
         </button>
@@ -274,6 +275,12 @@ export default function SocialTemplatesPage() {
 
       {pack && (
         <div className="space-y-4">
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Platforms" value={String(cards.length)} icon="templates" />
+            <StatCard title="Images found" value={String(templateImageUrls?.length ?? 0)} icon="projects" />
+            <StatCard title="Audience mode" value={audience} icon="users" />
+            <StatCard title="Content style" value={contentStyle} icon="growth" />
+          </section>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-zinc-600 dark:text-zinc-300">
               Source:{" "}
@@ -290,7 +297,7 @@ export default function SocialTemplatesPage() {
           </div>
 
           {pack.images && pack.images.length > 0 && (
-            <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="ds-surface p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Images from page
               </h2>
@@ -325,7 +332,7 @@ export default function SocialTemplatesPage() {
             {cards.map((c) => (
               <section
                 key={c.id}
-                className="flex flex-col rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60"
+                className="ds-surface flex flex-col p-5 transition hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

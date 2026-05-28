@@ -8,6 +8,7 @@ import type { GeneratedContent, Project, ProjectStatus } from "@/types/api";
 import { ShareToolbar } from "@/components/social/share-toolbar";
 import { CopyButton } from "@/components/ui/copy-button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 function isProcessing(status: ProjectStatus): boolean {
   return status === "pending" || status === "crawling" || status === "analyzing";
@@ -131,7 +132,10 @@ export default function ProjectDetailPage() {
               Project settings
             </Link>
           </div>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight">{project.name}</h1>
+          <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <NavIcon name="projects" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+            {project.name}
+          </h1>
           <p className="mt-1 break-all text-sm text-zinc-500 dark:text-zinc-400">{project.website_url}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusBadge status={project.status} />
@@ -155,7 +159,7 @@ export default function ProjectDetailPage() {
               type="button"
               disabled={!!regen || processing}
               onClick={() => void doRegenerate("analysis")}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs disabled:opacity-50"
             >
               {regen === "analysis" ? "Queueing…" : "Re-analyze (AI)"}
             </button>
@@ -163,7 +167,7 @@ export default function ProjectDetailPage() {
               type="button"
               disabled={!!regen || processing}
               onClick={() => void doRegenerate("content")}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs disabled:opacity-50"
             >
               {regen === "content" ? "Queueing…" : "Content only"}
             </button>
@@ -171,15 +175,21 @@ export default function ProjectDetailPage() {
               type="button"
               disabled={!!regen || processing}
               onClick={() => void doRegenerate("crawl")}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs disabled:opacity-50"
             >
               {regen === "crawl" ? "Queueing…" : "Re-crawl + AI"}
             </button>
           </div>
         </div>
       </div>
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Crawled pages" value={String(project.crawled_pages?.length ?? 0)} icon="projects" />
+        <StatCard title="Content blocks" value={String(project.generated_contents?.length ?? 0)} icon="templates" />
+        <StatCard title="Status" value={project.status} icon="analytics" />
+        <StatCard title="Render images" value={String(allCrawlImageUrls.length)} icon="growth" />
+      </section>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Website info
         </h2>
@@ -222,7 +232,7 @@ export default function ProjectDetailPage() {
       </section>
 
       {analysis && (
-        <section className="space-y-6 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+        <section className="ds-surface space-y-6 p-6">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Business understanding
@@ -321,7 +331,7 @@ function ContentSection({
 }) {
   if (!items?.length) return null;
   return (
-    <section className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+    <section className="ds-surface p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{title}</h2>
@@ -334,7 +344,7 @@ function ContentSection({
       </div>
       <ul className="mt-5 space-y-4">
         {items.map((g) => (
-          <li key={g.id} className="rounded-xl border border-zinc-100 bg-zinc-50/40 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <li key={g.id} className="rounded-xl border border-zinc-100 bg-zinc-50/60 p-4 transition hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-950/50">
             <div className="flex items-start justify-between gap-2">
               <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{g.title ?? "Untitled"}</h3>
               <CopyButton text={g.content} label="Copy" />

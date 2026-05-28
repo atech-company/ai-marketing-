@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
 import type { Project, StoreAnalyticsResponse } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 function pct(value: number, total: number): number {
   if (total <= 0) return 0;
@@ -453,7 +454,10 @@ export default function StoreAnalyticsPage() {
   return (
     <div lang={language} className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{tx(language, "Store analytics", "تحليل المتجر")}</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="analytics" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          {tx(language, "Store analytics", "تحليل المتجر")}
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {tx(language, "One-time setup: save credentials in a project, then all users can run analytics from that project.", "إعداد مرة واحدة: احفظ بيانات المتجر داخل المشروع، ثم يمكن لجميع المستخدمين التحليل من نفس المشروع.")}
         </p>
@@ -463,7 +467,7 @@ export default function StoreAnalyticsPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface p-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">{tx(language, "Module name", "اسم الوحدة")}</label>
@@ -616,7 +620,7 @@ export default function StoreAnalyticsPage() {
                   !newStoreApiKey.trim()
                 }
                 onClick={() => void onCreateProjectWithCredentials()}
-                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+                className="ds-btn ds-btn-primary disabled:opacity-60"
               >
                 {creatingProject ? tx(language, "Creating...", "جار الإنشاء...") : tx(language, "Create and use this project", "إنشاء واستخدام هذا المشروع")}
               </button>
@@ -668,7 +672,7 @@ export default function StoreAnalyticsPage() {
                 type="button"
                 disabled={savingEdit || !editStoreUrl.trim() || !editStoreApiKey.trim()}
                 onClick={() => void onSaveCredentials()}
-                className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+                className="ds-btn ds-btn-primary disabled:opacity-60"
               >
                 {savingEdit ? tx(language, "Saving...", "جار الحفظ...") : tx(language, "Save credentials", "حفظ البيانات")}
               </button>
@@ -681,7 +685,7 @@ export default function StoreAnalyticsPage() {
             type="button"
             disabled={!canAnalyze || loading}
             onClick={() => void onAnalyze()}
-            className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+            className="ds-btn ds-btn-primary disabled:opacity-60"
           >
             {loading ? tx(language, "Analyzing…", "جار التحليل...") : tx(language, "Analyze", "تحليل")}
           </button>
@@ -692,7 +696,7 @@ export default function StoreAnalyticsPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface p-5">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Store analysis history
@@ -743,8 +747,14 @@ export default function StoreAnalyticsPage() {
 
       {result && (
         <div className="space-y-6">
-          <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+          <section className="ds-surface p-5">
             <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Summary</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard title="Revenue" value={money(result.stats.totals.total_revenue, language)} icon="revenue" />
+              <StatCard title="Orders" value={String(result.stats.totals.total_orders)} icon="orders" />
+              <StatCard title="Customers" value={String(result.stats.totals.total_customers)} icon="customers" />
+              <StatCard title="AOV" value={money(result.stats.totals.average_order_value, language)} icon="growth" />
+            </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
                 <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Total revenue</div>

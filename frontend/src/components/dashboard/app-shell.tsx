@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api, getStoredUser, setStoredToken, setStoredUser } from "@/lib/api-client";
+import { NavIcon } from "@/components/ui/design-system";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -45,11 +46,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const nav = useMemo(
     () => [
-      { href: "/dashboard", label: "Projects" },
-      { href: "/dashboard/projects/new", label: "Analyze website" },
-      { href: "/dashboard/social-templates", label: "Social templates" },
-      { href: "/dashboard/store-analytics", label: "Store analytics" },
-      ...(isAdmin ? [{ href: "/dashboard/admin/users", label: "Admin · Users" }, { href: "/dashboard/admin/projects", label: "Admin · Projects" }] : []),
+      { href: "/dashboard", label: "Projects", icon: "projects" as const },
+      { href: "/dashboard/projects/new", label: "Analyze website", icon: "analyze" as const },
+      { href: "/dashboard/social-templates", label: "Social templates", icon: "templates" as const },
+      { href: "/dashboard/store-analytics", label: "Store analytics", icon: "analytics" as const },
+      ...(isAdmin
+        ? [
+            { href: "/dashboard/admin/users", label: "Admin · Users", icon: "users" as const },
+            { href: "/dashboard/admin/projects", label: "Admin · Projects", icon: "adminProjects" as const },
+          ]
+        : []),
     ],
     [isAdmin],
   );
@@ -66,8 +72,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <aside className="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/80 md:flex md:flex-col">
+    <div className="flex min-h-screen text-zinc-900 dark:text-zinc-50">
+      <aside className="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/65 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70 md:flex md:flex-col">
         <div className="flex h-16 items-center border-b border-zinc-200/80 px-6 dark:border-zinc-800">
           <Link href="/dashboard" className="text-sm font-semibold tracking-tight">
             AI Marketing Discovery
@@ -86,12 +92,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-violet-600/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-200"
                     : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
                 }`}
               >
+                <NavIcon name={item.icon} />
                 {item.label}
               </Link>
             );
@@ -109,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80 md:px-8">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-zinc-200/80 bg-white/70 px-4 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/65 md:px-8">
           <div className="flex items-center gap-3 md:hidden">
             <Link href="/dashboard" className="text-sm font-semibold">
               AI Discovery
@@ -150,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main className="flex-1 px-4 py-8 md:px-8">{children}</main>
+        <main className="animate-enter-fade flex-1 px-4 py-8 md:px-8">{children}</main>
       </div>
     </div>
   );

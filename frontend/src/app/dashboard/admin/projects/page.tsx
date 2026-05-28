@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api-client";
 import type { Project } from "@/types/api";
+import { NavIcon, StatCard } from "@/components/ui/design-system";
 
 export default function AdminProjectsPage() {
   const [meAdmin, setMeAdmin] = useState<boolean | null>(null);
@@ -71,9 +72,16 @@ export default function AdminProjectsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin · Projects</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="adminProjects" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          Admin · Projects
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Rename or delete any project.</p>
       </div>
+      <section className="grid gap-3 sm:grid-cols-2">
+        <StatCard title="Total projects" value={String(filtered.length)} icon="projects" />
+        <StatCard title="Failed projects" value={String(filtered.filter((p) => p.status === "failed").length)} icon="growth" />
+      </section>
 
       {error && (
         <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
@@ -92,13 +100,13 @@ export default function AdminProjectsPage() {
           type="button"
           disabled={busy}
           onClick={() => void load(q.trim() || undefined)}
-          className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium dark:border-zinc-700 dark:bg-zinc-950"
+          className="ds-btn ds-btn-ghost"
         >
           Search
         </button>
       </div>
 
-      <section className="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <section className="ds-surface overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-950/50 dark:text-zinc-400">
             <tr>
@@ -141,7 +149,7 @@ export default function AdminProjectsPage() {
                       type="button"
                       disabled={busy}
                       onClick={() => void renameProject(p.id, p.name)}
-                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs dark:border-zinc-700"
+                      className="ds-btn ds-btn-ghost px-3 py-1.5 text-xs"
                     >
                       Rename
                     </button>
@@ -149,7 +157,7 @@ export default function AdminProjectsPage() {
                       type="button"
                       disabled={busy}
                       onClick={() => void deleteProject(p.id)}
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-700 dark:border-rose-500/40 dark:text-rose-200"
+                      className="ds-btn rounded-lg border border-rose-200 px-3 py-1.5 text-xs text-rose-700 dark:border-rose-500/40 dark:text-rose-200"
                     >
                       Delete
                     </button>

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
 import type { Project } from "@/types/api";
+import { NavIcon } from "@/components/ui/design-system";
 
 export default function ProjectSettingsPage() {
   const params = useParams();
@@ -93,13 +94,16 @@ export default function ProjectSettingsPage() {
         <Link href={`/dashboard/projects/${id}`} className="text-sm font-medium text-violet-600 hover:text-violet-500 dark:text-violet-400">
           ← Back to project
         </Link>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight">Project settings</h1>
+        <h1 className="mt-3 flex items-center gap-2 text-2xl font-semibold tracking-tight">
+          <NavIcon name="adminProjects" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          Project settings
+        </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           One setup per project: store credentials + AI provider key for all users who can access this project.
         </p>
       </div>
 
-      <form onSubmit={(e) => void onSave(e)} className="space-y-5 rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+      <form onSubmit={(e) => void onSave(e)} className="ds-surface space-y-5 p-6">
         {error && (
           <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
             {error}
@@ -120,7 +124,7 @@ export default function ProjectSettingsPage() {
           />
         </div>
 
-        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">Store credentials</p>
           <div className="mt-3 grid gap-3">
             <div>
@@ -157,7 +161,7 @@ export default function ProjectSettingsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">AI provider credentials</p>
           <div className="mt-3 grid gap-3">
             <div>
@@ -187,7 +191,7 @@ export default function ProjectSettingsPage() {
         <button
           type="submit"
           disabled={saving || !name.trim()}
-          className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+          className="ds-btn ds-btn-primary w-full py-2.5 disabled:opacity-60"
         >
           {saving ? "Saving..." : "Save settings"}
         </button>
