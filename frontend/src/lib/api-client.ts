@@ -163,7 +163,7 @@ export async function apiFetch<T>(
 }
 
 export const api = {
-  register: (body: { name: string; email: string; password: string; password_confirmation: string }) =>
+  register: (body: { name: string; email: string; password: string; password_confirmation: string; selected_plan?: string }) =>
     apiFetch<AuthResponse>("/register", { method: "POST", body: JSON.stringify(body), token: null }),
 
   login: (body: { email: string; password: string }) =>
@@ -229,6 +229,11 @@ export const api = {
     apiFetch<{ message: string }>(`/admin/users/${id}/reset-password`, {
       method: "POST",
       body: JSON.stringify({ password }),
+    }),
+
+  adminApproveUserAccess: (id: number) =>
+    apiFetch<{ message: string }>(`/admin/users/${id}/approve-access`, {
+      method: "POST",
     }),
 
   adminProjects: (page = 1, q?: string) =>

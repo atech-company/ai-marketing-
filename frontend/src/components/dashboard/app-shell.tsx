@@ -10,6 +10,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [accessNotice, setAccessNotice] = useState<string | null>(null);
   const [uiLang, setUiLang] = useState<"en" | "ar">(() => {
     if (typeof window === "undefined") return "en";
     return localStorage.getItem("aim_ui_lang") === "ar" ? "ar" : "en";
@@ -28,6 +29,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (!alive) return;
         setIsAdmin(Boolean(r.user?.is_admin));
         setStoredUser(r.user);
+        if (!r.user?.is_admin && r.user?.access_status === "pending_approval") {
+          setAccessNotice(
+            `Your free trial has ended. Send your ${r.user.selected_plan ?? "selected"} plan payment to ${r.user.payment_phone ?? "76349746"} via ${r.user.payment_methods ?? "Wish Money or OMT"}, then send the invoice on ${r.user.invoice_channel ?? "WhatsApp"}. Admin confirmation is required.`,
+          );
+        } else if (!r.user?.is_admin && r.user?.access_status === "trial" && r.user?.trial_ends_at) {
+          setAccessNotice(
+            `Free trial active until ${new Date(r.user.trial_ends_at).toLocaleString()}. After trial, send payment to ${r.user.payment_phone ?? "76349746"} and share invoice on ${r.user.invoice_channel ?? "WhatsApp"} for admin approval.`,
+          );
+        }
       })
       .catch(() => {
         /* ignore */
@@ -73,6 +83,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen text-zinc-900 dark:text-zinc-50">
+      {accessNotice && (
+        <div className="fixed bottom-4 right-4 z-40 max-w-md rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 shadow-xl dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
+          <p>{accessNotice}</p>
+          <button
+            type="button"
+            className="mt-2 rounded-md border border-amber-300 px-2 py-1 text-xs font-semibold hover:bg-amber-100 dark:border-amber-500/40 dark:hover:bg-amber-500/20"
+            onClick={() => setAccessNotice(null)}
+          >
+            Close
+          </button>
+        </div>
+      )}
       <aside className="hidden w-64 shrink-0 border-r border-zinc-200/80 bg-white/65 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/70 md:flex md:flex-col">
         <div className="flex h-16 items-center border-b border-zinc-200/80 px-6 dark:border-zinc-800">
           <Link href="/dashboard" className="text-sm font-semibold tracking-tight">

@@ -84,8 +84,16 @@ export default function DashboardPage() {
       </div>
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Total projects" value={String(projects.length)} icon="projects" />
-        <StatCard title="Completed" value={String(projects.filter((p) => p.status === "done").length)} icon="growth" />
-        <StatCard title="Processing" value={String(projects.filter((p) => p.status === "running").length)} icon="analytics" />
+        <StatCard
+          title="Completed"
+          value={String(projects.filter((p) => p.status === "completed").length)}
+          icon="growth"
+        />
+        <StatCard
+          title="Processing"
+          value={String(projects.filter((p) => p.status === "pending" || p.status === "crawling" || p.status === "analyzing").length)}
+          icon="analytics"
+        />
         <StatCard title="Failed" value={String(projects.filter((p) => p.status === "failed").length)} icon="orders" />
       </section>
 

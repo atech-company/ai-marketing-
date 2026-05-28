@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState("Growth");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,7 @@ export default function RegisterPage() {
         email,
         password,
         password_confirmation: passwordConfirmation,
+        selected_plan: selectedPlan,
       });
       setStoredToken(res.token);
       setStoredUser(res.user);
@@ -79,6 +81,24 @@ export default function RegisterPage() {
               required
               className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
             />
+          </div>
+          <div>
+            <label htmlFor="selected_plan" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+              Plan
+            </label>
+            <select
+              id="selected_plan"
+              value={selectedPlan}
+              onChange={(e) => setSelectedPlan(e.target.value)}
+              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="Starter">Starter</option>
+              <option value="Growth">Growth</option>
+              <option value="Scale">Scale</option>
+            </select>
+            <p className="mt-1 text-xs text-zinc-500">
+              Every account includes a free 7-day trial. After trial, admin approval is required after payment proof.
+            </p>
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">

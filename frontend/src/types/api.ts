@@ -10,6 +10,14 @@ export interface User {
   name: string;
   email: string;
   is_admin?: boolean;
+  selected_plan?: string | null;
+  trial_ends_at?: string | null;
+  access_approved_at?: string | null;
+  access_status?: "admin" | "approved" | "trial" | "pending_approval";
+  payment_phone?: string;
+  payment_methods?: string;
+  invoice_channel?: string;
+  requires_admin_approval?: boolean;
 }
 
 export interface AuthResponse {
@@ -23,6 +31,10 @@ export interface AdminUserRow {
   name: string;
   email: string;
   is_admin: boolean;
+  selected_plan?: string | null;
+  trial_ends_at?: string | null;
+  access_approved_at?: string | null;
+  access_status?: "admin" | "approved" | "trial" | "pending_approval";
   created_at: string | null;
 }
 

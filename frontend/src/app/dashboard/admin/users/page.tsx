@@ -80,6 +80,19 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function approveAccess(id: number) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.adminApproveUserAccess(id);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to approve access.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (meAdmin === false) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -156,6 +169,8 @@ export default function AdminUsersPage() {
               <th className="px-4 py-3">ID</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Plan</th>
+              <th className="px-4 py-3">Access</th>
               <th className="px-4 py-3">Admin</th>
               <th className="px-4 py-3" />
             </tr>
@@ -166,9 +181,31 @@ export default function AdminUsersPage() {
                 <td className="px-4 py-3 text-zinc-500">{u.id}</td>
                 <td className="px-4 py-3">{u.name}</td>
                 <td className="px-4 py-3">{u.email}</td>
+                <td className="px-4 py-3">{u.selected_plan ?? "—"}</td>
+                <td className="px-4 py-3">
+                  <span className="text-xs font-medium">
+                    {u.access_status === "pending_approval"
+                      ? "Pending admin approval"
+                      : u.access_status === "trial"
+                        ? "Trial"
+                        : u.access_status === "approved"
+                          ? "Approved"
+                          : "Admin"}
+                  </span>
+                </td>
                 <td className="px-4 py-3">{u.is_admin ? "Yes" : "No"}</td>
                 <td className="px-4 py-3 text-right">
                   <div className="inline-flex gap-2">
+                    {u.access_status === "pending_approval" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void approveAccess(u.id)}
+                        className="ds-btn ds-btn-primary px-3 py-1.5 text-xs"
+                      >
+                        Approve
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={busy}
@@ -191,7 +228,7 @@ export default function AdminUsersPage() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-zinc-500" colSpan={5}>
+                <td className="px-4 py-6 text-zinc-500" colSpan={7}>
                   No users found.
                 </td>
               </tr>
