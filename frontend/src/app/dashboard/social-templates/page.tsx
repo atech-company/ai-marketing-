@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
+import { getContentLanguage, type ContentLanguage } from "@/lib/content-language";
 import { CopyButton } from "@/components/ui/copy-button";
 import type { SocialTemplatesPack } from "@/types/social-templates";
 import {
@@ -108,9 +109,14 @@ export default function SocialTemplatesPage() {
   const [audience, setAudience] = useState("general");
   const [contentStyle, setContentStyle] = useState("balanced");
   const [discussionMode, setDiscussionMode] = useState(true);
+  const [contentLanguage, setContentLanguageState] = useState<ContentLanguage>("en");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pack, setPack] = useState<SocialTemplatesPack | null>(null);
+
+  useEffect(() => {
+    setContentLanguageState(getContentLanguage());
+  }, []);
 
   function buildNotesPayload(): string | undefined {
     const segments: string[] = [];
@@ -136,6 +142,7 @@ export default function SocialTemplatesPage() {
         url,
         item_label: itemLabel.trim() || undefined,
         notes: buildNotesPayload(),
+        language: contentLanguage,
       });
       setPack(res.data);
     } catch (err) {
@@ -211,9 +218,23 @@ export default function SocialTemplatesPage() {
             rows={3}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Tone, promo code, audience, language…"
+            placeholder="Tone, promo code, audience…"
             className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
           />
+        </div>
+        <div>
+          <label htmlFor="st-lang" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Content language
+          </label>
+          <select
+            id="st-lang"
+            value={contentLanguage}
+            onChange={(e) => setContentLanguageState(e.target.value as ContentLanguage)}
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+          </select>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>

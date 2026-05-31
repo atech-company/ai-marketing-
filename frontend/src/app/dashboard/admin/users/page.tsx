@@ -5,6 +5,23 @@ import { api, ApiError } from "@/lib/api-client";
 import { NavIcon, StatCard } from "@/components/ui/design-system";
 import type { AdminUserRow } from "@/types/api";
 
+function accessLabel(status: AdminUserRow["access_status"]): string {
+  switch (status) {
+    case "pending_approval":
+      return "Pending approval";
+    case "trial":
+      return "Trial";
+    case "approved":
+      return "Approved";
+    case "disabled":
+      return "Disabled";
+    case "admin":
+      return "Admin";
+    default:
+      return status ?? "—";
+  }
+}
+
 export default function AdminUsersPage() {
   const [meAdmin, setMeAdmin] = useState<boolean | null>(null);
   const [rows, setRows] = useState<AdminUserRow[]>([]);
@@ -93,6 +110,33 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function activateUser(id: number) {
+    setBusy(true);
+    setError(null);
+    try {
+      await api.adminActivateUser(id);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to activate user.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deactivateUser(id: number) {
+    if (!window.confirm("Deactivate this user? They will be signed out immediately.")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api.adminDeactivateUser(id);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Failed to deactivate user.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (meAdmin === false) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -108,11 +152,14 @@ export default function AdminUsersPage() {
           <NavIcon name="users" className="h-5 w-5 text-violet-600 dark:text-violet-300" />
           Admin · Users
         </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Create users, reset passwords, and delete accounts.</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Create users, activate or deactivate accounts, approve access, and reset passwords.
+        </p>
       </div>
-      <section className="grid gap-3 sm:grid-cols-2">
+      <section className="grid gap-3 sm:grid-cols-3">
         <StatCard title="Total users" value={String(rows.length)} icon="users" />
         <StatCard title="Admins" value={String(rows.filter((u) => u.is_admin).length)} icon="adminProjects" />
+        <StatCard title="Disabled" value={String(rows.filter((u) => u.access_status === "disabled").length)} icon="analytics" />
       </section>
 
       {error && (
@@ -183,19 +230,21 @@ export default function AdminUsersPage() {
                 <td className="px-4 py-3">{u.email}</td>
                 <td className="px-4 py-3">{u.selected_plan ?? "—"}</td>
                 <td className="px-4 py-3">
-                  <span className="text-xs font-medium">
-                    {u.access_status === "pending_approval"
-                      ? "Pending admin approval"
-                      : u.access_status === "trial"
-                        ? "Trial"
-                        : u.access_status === "approved"
-                          ? "Approved"
-                          : "Admin"}
+                  <span
+                    className={`text-xs font-medium ${
+                      u.access_status === "disabled"
+                        ? "text-rose-600 dark:text-rose-400"
+                        : u.access_status === "pending_approval"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : ""
+                    }`}
+                  >
+                    {accessLabel(u.access_status)}
                   </span>
                 </td>
                 <td className="px-4 py-3">{u.is_admin ? "Yes" : "No"}</td>
                 <td className="px-4 py-3 text-right">
-                  <div className="inline-flex gap-2">
+                  <div className="inline-flex flex-wrap justify-end gap-2">
                     {u.access_status === "pending_approval" && (
                       <button
                         type="button"
@@ -206,6 +255,25 @@ export default function AdminUsersPage() {
                         Approve
                       </button>
                     )}
+                    {u.access_status === "disabled" ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void activateUser(u.id)}
+                        className="ds-btn ds-btn-primary px-3 py-1.5 text-xs"
+                      >
+                        Activate
+                      </button>
+                    ) : !u.is_admin ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void deactivateUser(u.id)}
+                        className="ds-btn rounded-lg border border-amber-200 px-3 py-1.5 text-xs text-amber-800 dark:border-amber-500/40 dark:text-amber-200"
+                      >
+                        Deactivate
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       disabled={busy}
@@ -239,4 +307,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
+import { getContentLanguage, type ContentLanguage } from "@/lib/content-language";
 import type { Project } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { NavIcon, StatCard } from "@/components/ui/design-system";
@@ -23,12 +24,14 @@ function inferProjectName(rawUrl: string): string {
 export default function NewProjectPage() {
   const router = useRouter();
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [contentLanguage, setContentLanguageState] = useState<ContentLanguage>("en");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Project[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {
+    setContentLanguageState(getContentLanguage());
     let active = true;
     (async () => {
       try {
@@ -56,6 +59,7 @@ export default function NewProjectPage() {
       const res = await api.createProject({
         name: inferProjectName(websiteUrl),
         website_url: websiteUrl.trim(),
+        content_language: contentLanguage,
       });
       router.push(`/dashboard/projects/${res.data.id}`);
     } catch (err) {
@@ -110,6 +114,23 @@ export default function NewProjectPage() {
             className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
             placeholder="https://example.com"
           />
+        </div>
+        <div>
+          <label htmlFor="content_language" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Content language
+          </label>
+          <select
+            id="content_language"
+            value={contentLanguage}
+            onChange={(e) => setContentLanguageState(e.target.value as ContentLanguage)}
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <option value="en">English — AI writes in English</option>
+            <option value="ar">العربية — AI writes in Arabic</option>
+          </select>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Positioning, posts, ads, and homepage suggestions are generated in this language.
+          </p>
         </div>
         <button
           type="submit"

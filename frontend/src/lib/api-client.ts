@@ -179,6 +179,7 @@ export const api = {
   createProject: (body: {
     name: string;
     website_url: string;
+    content_language?: "en" | "ar";
     store_platform?: "shopify" | "woocommerce" | "custom";
     store_url?: string;
     store_api_key?: string;
@@ -193,6 +194,7 @@ export const api = {
     id: number,
     body: {
       name?: string;
+      content_language?: "en" | "ar";
       store_platform?: "shopify" | "woocommerce" | "custom";
       store_url?: string;
       store_api_key?: string;
@@ -205,13 +207,16 @@ export const api = {
   deleteProject: (id: number) =>
     apiFetch<{ message: string }>(`/projects/${id}`, { method: "DELETE" }),
 
-  regenerate: (id: number, scope: "analysis" | "content" | "crawl") =>
+  regenerate: (id: number, scope: "analysis" | "content" | "crawl", contentLanguage?: "en" | "ar") =>
     apiFetch<{ message: string }>(`/projects/${id}/regenerate`, {
       method: "POST",
-      body: JSON.stringify({ scope }),
+      body: JSON.stringify({
+        scope,
+        ...(contentLanguage ? { content_language: contentLanguage } : {}),
+      }),
     }),
 
-  socialTemplates: (body: { url: string; item_label?: string; notes?: string }) =>
+  socialTemplates: (body: { url: string; item_label?: string; notes?: string; language?: "en" | "ar" }) =>
     apiFetch<{ data: SocialTemplatesPack }>("/social-templates", {
       method: "POST",
       body: JSON.stringify(body),
@@ -233,6 +238,16 @@ export const api = {
 
   adminApproveUserAccess: (id: number) =>
     apiFetch<{ message: string }>(`/admin/users/${id}/approve-access`, {
+      method: "POST",
+    }),
+
+  adminActivateUser: (id: number) =>
+    apiFetch<{ message: string; user: AdminUserRow }>(`/admin/users/${id}/activate`, {
+      method: "POST",
+    }),
+
+  adminDeactivateUser: (id: number) =>
+    apiFetch<{ message: string; user: AdminUserRow }>(`/admin/users/${id}/deactivate`, {
       method: "POST",
     }),
 

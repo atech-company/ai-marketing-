@@ -10,10 +10,11 @@ export interface User {
   name: string;
   email: string;
   is_admin?: boolean;
+  is_active?: boolean;
   selected_plan?: string | null;
   trial_ends_at?: string | null;
   access_approved_at?: string | null;
-  access_status?: "admin" | "approved" | "trial" | "pending_approval";
+  access_status?: "admin" | "approved" | "trial" | "pending_approval" | "disabled";
   payment_phone?: string;
   payment_methods?: string;
   invoice_channel?: string;
@@ -31,10 +32,11 @@ export interface AdminUserRow {
   name: string;
   email: string;
   is_admin: boolean;
+  is_active?: boolean;
   selected_plan?: string | null;
   trial_ends_at?: string | null;
   access_approved_at?: string | null;
-  access_status?: "admin" | "approved" | "trial" | "pending_approval";
+  access_status?: "admin" | "approved" | "trial" | "pending_approval" | "disabled";
   created_at: string | null;
 }
 
@@ -79,6 +81,7 @@ export interface Project {
   name: string;
   user?: { id: number; name: string; email: string } | null;
   website_url: string;
+  content_language?: "en" | "ar";
   store_platform?: "shopify" | "woocommerce" | "custom" | null;
   store_url?: string | null;
   has_store_config?: boolean;

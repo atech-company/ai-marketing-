@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
+import { getContentLanguage, type ContentLanguage } from "@/lib/content-language";
 import type { GeneratedContent, Project, ProjectStatus } from "@/types/api";
 import { ShareToolbar } from "@/components/social/share-toolbar";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -29,6 +30,17 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [regen, setRegen] = useState<string | null>(null);
+  const [contentLanguage, setContentLanguageState] = useState<ContentLanguage>("en");
+
+  useEffect(() => {
+    setContentLanguageState(getContentLanguage());
+  }, []);
+
+  useEffect(() => {
+    if (project?.content_language === "en" || project?.content_language === "ar") {
+      setContentLanguageState(project.content_language);
+    }
+  }, [project?.content_language]);
 
   const load = useCallback(async () => {
     if (!Number.isFinite(id)) return;
@@ -86,7 +98,7 @@ export default function ProjectDetailPage() {
     if (!project) return;
     setRegen(scope);
     try {
-      await api.regenerate(project.id, scope);
+      await api.regenerate(project.id, scope, contentLanguage);
       await load();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Regeneration failed.");
@@ -139,6 +151,9 @@ export default function ProjectDetailPage() {
           <p className="mt-1 break-all text-sm text-zinc-500 dark:text-zinc-400">{project.website_url}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusBadge status={project.status} />
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
+              {contentLanguage === "ar" ? "Arabic content" : "English content"}
+            </span>
             {processing && (
               <span className="text-xs text-zinc-500 dark:text-zinc-400">Refreshing every few seconds…</span>
             )}
@@ -152,7 +167,22 @@ export default function ProjectDetailPage() {
             <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p>
           )}
         </div>
-        <div className="flex flex-col gap-2 sm:items-end">
+        <div className="flex flex-col gap-3 sm:items-end">
+          <div>
+            <label htmlFor="project-content-lang" className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+              Content language
+            </label>
+            <select
+              id="project-content-lang"
+              value={contentLanguage}
+              onChange={(e) => setContentLanguageState(e.target.value as ContentLanguage)}
+              disabled={!!regen || processing}
+              className="mt-1 block rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+            </select>
+          </div>
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Regenerate</p>
           <div className="flex flex-wrap gap-2">
             <button

@@ -5,6 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { api, getStoredUser, setStoredToken, setStoredUser } from "@/lib/api-client";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
+import {
+  applyDocumentLanguage,
+  getContentLanguage,
+  setContentLanguage,
+  type ContentLanguage,
+} from "@/lib/content-language";
 import { NavIcon } from "@/components/ui/design-system";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -12,10 +18,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [accessNotice, setAccessNotice] = useState<string | null>(null);
-  const [uiLang, setUiLang] = useState<"en" | "ar">(() => {
+  const [uiLang, setUiLang] = useState<ContentLanguage>(() => {
     if (typeof window === "undefined") return "en";
-    return localStorage.getItem("aim_ui_lang") === "ar" ? "ar" : "en";
+    return getContentLanguage();
   });
+
+  useEffect(() => {
+    applyDocumentLanguage(uiLang);
+  }, [uiLang]);
 
   useEffect(() => {
     // Fast path: use cached user so first paint doesn't wait for /user.
@@ -30,7 +40,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (!alive) return;
         setIsAdmin(Boolean(r.user?.is_admin));
         setStoredUser(r.user);
-        if (!r.user?.is_admin && r.user?.access_status === "pending_approval") {
+        if (!r.user?.is_admin && r.user?.access_status === "disabled") {
+          setAccessNotice("Your account has been deactivated by an administrator. Please contact support.");
+        } else if (!r.user?.is_admin && r.user?.access_status === "pending_approval") {
           setAccessNotice(
             `Your free trial has ended. Send your ${r.user.selected_plan ?? "selected"} plan payment to ${r.user.payment_phone ?? "76349746"} via ${r.user.payment_methods ?? "Wish Money or OMT"}, then send the invoice on ${r.user.invoice_channel ?? "WhatsApp"}. Admin confirmation is required.`,
           );
@@ -48,11 +60,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  function switchLanguage(next: "en" | "ar") {
+  function switchLanguage(next: ContentLanguage) {
     setUiLang(next);
-    localStorage.setItem("aim_ui_lang", next);
-    document.documentElement.lang = next;
-    window.location.reload();
+    setContentLanguage(next);
   }
 
   const nav = useMemo(
@@ -149,6 +159,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {APP_TAGLINE}
           </div>
           <div className="flex items-center gap-2">
+            <span className="hidden text-[10px] font-medium uppercase tracking-wide text-zinc-400 sm:inline">
+              Content
+            </span>
             <button
               type="button"
               onClick={() => switchLanguage("en")}
@@ -180,7 +193,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </header>
-        <main className="animate-enter-fade flex-1 px-4 py-8 md:px-8">{children}</main>
+        <main
+          lang={uiLang}
+          dir={uiLang === "ar" ? "rtl" : "ltr"}
+          className="animate-enter-fade flex-1 px-4 py-8 md:px-8"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

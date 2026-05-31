@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, api } from "@/lib/api-client";
+import { getContentLanguage, type ContentLanguage } from "@/lib/content-language";
 import type { Project, StoreAnalyticsResponse } from "@/types/api";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { NavIcon, StatCard } from "@/components/ui/design-system";
@@ -12,14 +13,14 @@ function pct(value: number, total: number): number {
   return Math.max(0, Math.min(100, (value / total) * 100));
 }
 
-function money(n: number, locale: "en" | "ar" = "en"): string {
+function money(n: number, locale: ContentLanguage = "en"): string {
   return n.toLocaleString(locale === "ar" ? "ar" : undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
 
-function categoryFromProductName(name: string, language: "en" | "ar" = "en"): string {
+function categoryFromProductName(name: string, language: ContentLanguage = "en"): string {
   const label = (en: string, ar: string) => (language === "ar" ? ar : en);
   const lower = name.toLowerCase();
   if (/(shirt|hoodie|jacket|pants|dress|shoes|sneaker|clothes|apparel)/.test(lower)) return label("Apparel", "ملابس");
@@ -30,7 +31,7 @@ function categoryFromProductName(name: string, language: "en" | "ar" = "en"): st
   return label("Other", "أخرى");
 }
 
-function tx(language: "en" | "ar", en: string, ar: string): string {
+function tx(language: ContentLanguage, en: string, ar: string): string {
   return language === "ar" ? ar : en;
 }
 
@@ -70,10 +71,9 @@ function CircleGauge({
 }
 
 export default function StoreAnalyticsPage() {
-  const [language, setLanguage] = useState<"en" | "ar">(() => {
+  const [language, setLanguage] = useState<ContentLanguage>(() => {
     if (typeof window === "undefined") return "en";
-    const stored = localStorage.getItem("aim_ui_lang");
-    return stored === "ar" ? "ar" : "en";
+    return getContentLanguage();
   });
   const [moduleName, setModuleName] = useState("Store analytics");
   const [projects, setProjects] = useState<Project[]>([]);
