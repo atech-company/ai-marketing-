@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { ApiError, api, setStoredToken, setStoredUser } from "@/lib/api-client";
-import { APP_NAME } from "@/lib/brand";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,116 +39,100 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col justify-center px-4">
-      <div className="mx-auto w-full max-w-md space-y-8">
-        <div className="text-center">
-          <Link href="/" className="text-sm font-semibold text-violet-600 dark:text-violet-400">
-            {APP_NAME}
-          </Link>
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight">Create your account</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Start analyzing websites in minutes.</p>
+    <AuthPageShell title="Create your account" subtitle="Start analyzing websites in minutes.">
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+            {error}
+          </div>
+        )}
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Name
+          </label>
+          <input
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition-shadow ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          />
         </div>
-        <form
-          onSubmit={(e) => void onSubmit(e)}
-          className="glass-card animate-enter-fade space-y-4 rounded-2xl p-6"
-        >
-          {error && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
-              {error}
-            </div>
-          )}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Name
-            </label>
-            <input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </div>
-          <div>
-            <label htmlFor="selected_plan" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Plan
-            </label>
-            <select
-              id="selected_plan"
-              value={selectedPlan}
-              onChange={(e) => setSelectedPlan(e.target.value)}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
-            >
-              <option value="Starter">Starter</option>
-              <option value="Growth">Growth</option>
-              <option value="Scale">Scale</option>
-            </select>
-            <p className="mt-1 text-xs text-zinc-500">
-              Every account includes a free 7-day trial. After trial, admin approval is required after payment proof.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={10}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
-            />
-            <p className="mt-1 text-xs text-zinc-500">At least 10 characters.</p>
-          </div>
-          <div>
-            <label
-              htmlFor="password_confirmation"
-              className="block text-sm font-medium text-zinc-700 dark:text-zinc-200"
-            >
-              Confirm password
-            </label>
-            <input
-              id="password_confirmation"
-              type="password"
-              autoComplete="new-password"
-              value={passwordConfirmation}
-              onChange={(e) => setPasswordConfirmation(e.target.value)}
-              required
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 disabled:opacity-60"
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition-shadow ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          />
+        </div>
+        <div>
+          <label htmlFor="selected_plan" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Plan
+          </label>
+          <select
+            id="selected_plan"
+            value={selectedPlan}
+            onChange={(e) => setSelectedPlan(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition-shadow ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
           >
-            {loading ? "Creating…" : "Create account"}
-          </button>
-          <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-            Already registered?{" "}
-            <Link href="/login" className="font-medium text-violet-600 dark:text-violet-400">
-              Sign in
-            </Link>
+            <option value="Starter">Starter</option>
+            <option value="Growth">Growth</option>
+            <option value="Scale">Scale</option>
+          </select>
+          <p className="mt-1 text-xs text-zinc-500">
+            Every account includes a free 7-day trial. After trial, admin approval is required after payment proof.
           </p>
-        </form>
-      </div>
-    </div>
+        </div>
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={10}
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition-shadow ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          />
+          <p className="mt-1 text-xs text-zinc-500">At least 10 characters.</p>
+        </div>
+        <div>
+          <label
+            htmlFor="password_confirmation"
+            className="block text-sm font-medium text-zinc-700 dark:text-zinc-200"
+          >
+            Confirm password
+          </label>
+          <input
+            id="password_confirmation"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+            required
+            className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm outline-none transition-shadow ring-violet-500/30 focus:border-violet-500 focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950"
+          />
+        </div>
+        <button type="submit" disabled={loading} className="ds-btn ds-btn-primary w-full py-2.5 disabled:opacity-60">
+          {loading ? "Creating…" : "Create account"}
+        </button>
+        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+          Already registered?{" "}
+          <Link href="/login" className="font-medium text-violet-600 dark:text-violet-400">
+            Sign in
+          </Link>
+        </p>
+      </form>
+    </AuthPageShell>
   );
 }

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { FaqAccordion } from "@/components/landing/faq-accordion";
+import { MarketingHeader } from "@/components/landing/marketing-header";
 import { APP_NAME } from "@/lib/brand";
 import { NavIcon } from "@/components/ui/design-system";
 
@@ -150,43 +152,19 @@ const faqs = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-violet-50/40 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-violet-950/30 dark:text-zinc-50">
-      <header className="sticky top-0 z-40 border-b border-zinc-200/60 bg-white/80 backdrop-blur-lg dark:border-zinc-800/80 dark:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
-          <nav className="hidden items-center gap-6 text-sm text-zinc-600 md:flex dark:text-zinc-400">
-            <a href="#how-it-works" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-              How it works
-            </a>
-            <a href="#features" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-              Features
-            </a>
-            <a href="#pricing" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-              Pricing
-            </a>
-            <a href="#faq" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-              FAQ
-            </a>
-          </nav>
-          <div className="flex gap-3 text-sm">
-            <Link href="/login" className="rounded-lg px-3 py-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white shadow-md shadow-violet-600/25 hover:bg-violet-500"
-            >
-              Get started
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-zinc-50 via-white to-violet-50/40 text-zinc-900 dark:from-zinc-950 dark:via-zinc-950 dark:to-violet-950/30 dark:text-zinc-50">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] overflow-hidden">
+        <div className="landing-blob absolute -left-24 top-8 h-72 w-72 bg-violet-400/20 dark:bg-violet-500/15" />
+        <div className="landing-blob landing-blob-delay absolute right-0 top-24 h-56 w-56 bg-cyan-400/15 dark:bg-cyan-500/10" />
+      </div>
+
+      <MarketingHeader />
 
       <main>
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
+        <section className="relative mx-auto max-w-6xl px-6 pb-16 pt-14 md:pt-20">
           <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div>
+            <div className="animate-fade-in-up">
               <p className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium uppercase tracking-widest text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
                 {APP_NAME} platform
               </p>
@@ -199,22 +177,16 @@ export default function HomePage() {
                 agencies, and growth teams who need depth without hiring a full content team.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
-                <Link
-                  href="/register"
-                  className="inline-flex rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-600/30 hover:bg-violet-500"
-                >
+                <Link href="/register" className="ds-btn ds-btn-primary px-6 py-3">
                   Start free analysis
                 </Link>
                 <Link
                   href="#pricing"
-                  className="inline-flex rounded-xl border border-violet-200 bg-violet-50 px-6 py-3 text-sm font-semibold text-violet-700 hover:bg-violet-100 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200 dark:hover:bg-violet-500/15"
+                  className="ds-btn ds-btn-ghost border-violet-200 px-6 py-3 text-violet-700 dark:border-violet-500/30 dark:text-violet-200"
                 >
                   Compare plans
                 </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex rounded-xl border border-zinc-200 bg-white/80 px-6 py-3 text-sm font-semibold text-zinc-800 backdrop-blur hover:bg-white dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-100 dark:hover:bg-zinc-900"
-                >
+                <Link href="/login" className="ds-btn ds-btn-ghost px-6 py-3">
                   Sign in
                 </Link>
               </div>
@@ -231,7 +203,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            <div className="rounded-3xl border border-zinc-200/80 bg-white/80 p-6 shadow-xl shadow-violet-500/5 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="animate-fade-in-up animate-delay-200 hover-lift rounded-3xl border border-zinc-200/80 bg-white/80 p-6 shadow-xl shadow-violet-500/10 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/60">
               <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Sample output preview</p>
               <div className="mt-4 space-y-3">
                 {[
@@ -240,7 +212,10 @@ export default function HomePage() {
                   { label: "Social post", sample: "Your space deserves better than generic decor. Start with the piece guests notice first." },
                   { label: "Ad headline", sample: "Upgrade your living room in one weekend — free shipping over $75." },
                 ].map((row) => (
-                  <div key={row.label} className="rounded-xl border border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/50">
+                  <div
+                    key={row.label}
+                    className="preview-row rounded-xl border border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/50"
+                  >
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">{row.label}</p>
                     <p className="mt-1 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">{row.sample}</p>
                   </div>
@@ -277,7 +252,7 @@ export default function HomePage() {
             {howItWorks.map((item) => (
               <article
                 key={item.step}
-                className="relative rounded-2xl border border-zinc-200/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/50"
+                className="hover-lift relative rounded-2xl border border-zinc-200/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/50"
               >
                 <span className="text-4xl font-bold text-violet-200 dark:text-violet-900">{item.step}</span>
                 <h3 className="mt-2 text-lg font-semibold">{item.title}</h3>
@@ -301,7 +276,7 @@ export default function HomePage() {
               {features.map((card) => (
                 <article
                   key={card.title}
-                  className="rounded-2xl border border-zinc-200/80 bg-white/90 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70"
+                  className="hover-lift rounded-2xl border border-zinc-200/80 bg-white/90 p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70"
                 >
                   <span className="inline-flex rounded-xl border border-violet-200 bg-violet-50 p-2.5 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
                     <NavIcon name={card.icon} className="h-5 w-5" />
@@ -343,7 +318,7 @@ export default function HomePage() {
               {deliverables.map((d) => (
                 <li
                   key={d.type}
-                  className="flex gap-4 rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/50"
+                  className="hover-lift flex gap-4 rounded-xl border border-zinc-200/80 bg-white/70 p-4 dark:border-zinc-800 dark:bg-zinc-900/50"
                 >
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">
                     ✓
@@ -365,7 +340,7 @@ export default function HomePage() {
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">Built for teams that ship marketing weekly</h2>
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
               {useCases.map((uc) => (
-                <article key={uc.title} className="rounded-2xl border border-zinc-200/80 p-6 dark:border-zinc-800">
+                <article key={uc.title} className="hover-lift rounded-2xl border border-zinc-200/80 bg-white/50 p-6 dark:border-zinc-800 dark:bg-zinc-900/40">
                   <h3 className="font-semibold">{uc.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{uc.body}</p>
                 </article>
@@ -387,9 +362,9 @@ export default function HomePage() {
             {plans.map((plan) => (
               <article
                 key={plan.name}
-                className={`rounded-2xl border p-6 shadow-sm ${
+                className={`hover-lift rounded-2xl border p-6 shadow-sm ${
                   plan.highlighted
-                    ? "border-violet-400 bg-violet-50/70 shadow-violet-400/15 dark:border-violet-400/60 dark:bg-violet-500/10"
+                    ? "scale-[1.02] border-violet-400 bg-violet-50/70 shadow-lg shadow-violet-400/20 ring-1 ring-violet-300/50 dark:border-violet-400/60 dark:bg-violet-500/10 dark:ring-violet-500/30"
                     : "border-zinc-200/80 bg-white/80 dark:border-zinc-800 dark:bg-zinc-900/60"
                 }`}
               >
@@ -431,19 +406,15 @@ export default function HomePage() {
         <section id="faq" className="mx-auto max-w-3xl px-6 pb-20">
           <p className="text-center text-sm font-medium uppercase tracking-widest text-violet-600 dark:text-violet-400">FAQ</p>
           <h2 className="mt-2 text-center text-3xl font-semibold tracking-tight">Common questions</h2>
-          <dl className="mt-10 space-y-6">
-            {faqs.map((item) => (
-              <div key={item.q} className="rounded-2xl border border-zinc-200/80 bg-white/70 p-6 dark:border-zinc-800 dark:bg-zinc-900/50">
-                <dt className="font-semibold">{item.q}</dt>
-                <dd className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{item.a}</dd>
-              </div>
-            ))}
-          </dl>
+          <FaqAccordion items={faqs} />
         </section>
 
         {/* CTA */}
         <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 px-8 py-12 text-center text-white shadow-xl shadow-violet-600/25 md:px-16">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 to-indigo-700 px-8 py-12 text-center text-white shadow-xl shadow-violet-600/25 md:px-16">
+            <div className="landing-blob pointer-events-none absolute -left-16 top-0 h-40 w-40 opacity-30" />
+            <div className="landing-blob landing-blob-delay pointer-events-none absolute -right-8 bottom-0 h-32 w-32 opacity-25" />
+            <div className="relative">
             <h2 className="text-2xl font-semibold md:text-3xl">Ready to analyze your first website?</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-violet-100 md:text-base">
               Join teams using {APP_NAME} to go from URL to campaigns, copy, and growth ideas in one workflow.
@@ -462,11 +433,12 @@ export default function HomePage() {
                 I already have an account
               </Link>
             </div>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-zinc-200/80 py-10 dark:border-zinc-800">
+      <footer className="border-t border-zinc-200/80 bg-white/40 py-10 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/40">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-zinc-500 md:flex-row dark:text-zinc-400">
           <span>© {new Date().getFullYear()} {APP_NAME}</span>
           <div className="flex gap-6">
