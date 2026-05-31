@@ -169,6 +169,9 @@ export const api = {
   login: (body: { email: string; password: string }) =>
     apiFetch<AuthResponse>("/login", { method: "POST", body: JSON.stringify(body), token: null }),
 
+  oauthProviders: () =>
+    apiFetch<{ providers: { google: boolean; github: boolean } }>("/auth/providers", { token: null }),
+
   logout: () => apiFetch<{ message: string }>("/logout", { method: "POST" }),
 
   me: () => apiFetch<{ user: User }>("/user"),

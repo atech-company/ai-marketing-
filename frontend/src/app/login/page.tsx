@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
+import { SocialLoginButtons } from "@/components/auth/social-login-buttons";
 import { ApiError, api, setStoredToken, setStoredUser } from "@/lib/api-client";
 
 export default function LoginPage() {
@@ -68,6 +69,7 @@ export default function LoginPage() {
         <button type="submit" disabled={loading} className="ds-btn ds-btn-primary w-full py-2.5 disabled:opacity-60">
           {loading ? "Signing in…" : "Sign in"}
         </button>
+        <SocialLoginButtons intent="login" />
         <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
           No account?{" "}
           <Link href="/register" className="font-medium text-violet-600 dark:text-violet-400">
