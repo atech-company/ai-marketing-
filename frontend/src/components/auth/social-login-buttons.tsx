@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 import { buildOAuthStartUrl, type OAuthIntent, type OAuthProvider } from "@/lib/oauth";
 
 function GoogleIcon() {
@@ -31,16 +31,29 @@ export function SocialLoginButtons({
   selectedPlan?: string;
 }) {
   const [providers, setProviders] = useState<{ google: boolean; github: boolean } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     api
       .oauthProviders()
       .then((res) => {
-        if (alive) setProviders(res.providers);
+        if (alive) {
+          setFetchError(null);
+          setProviders(res.providers);
+        }
       })
-      .catch(() => {
-        if (alive) setProviders({ google: false, github: false });
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setProviders({ google: false, github: false });
+        if (process.env.NODE_ENV === "development") {
+          const status = err instanceof ApiError ? err.status : null;
+          setFetchError(
+            status === 404
+              ? "Social login API route not found. Run the Laravel API from the project backend folder on port 8000."
+              : "Could not load sign-in options from the API.",
+          );
+        }
       });
     return () => {
       alive = false;
@@ -52,7 +65,19 @@ export function SocialLoginButtons({
   }
 
   const enabled = (Object.entries(providers) as [OAuthProvider, boolean][]).filter(([, on]) => on);
-  if (enabled.length === 0) return null;
+  if (enabled.length === 0) {
+    if (fetchError) {
+      return <p className="text-center text-xs text-amber-600 dark:text-amber-400">{fetchError}</p>;
+    }
+    if (process.env.NODE_ENV === "development") {
+      return (
+        <p className="text-center text-xs text-zinc-500">
+          Social login is off. Set GOOGLE_CLIENT_ID / GITHUB_CLIENT_ID in the API <code className="text-[11px]">.env</code>.
+        </p>
+      );
+    }
+    return null;
+  }
 
   function start(provider: OAuthProvider) {
     window.location.href = buildOAuthStartUrl(provider, intent, selectedPlan);
