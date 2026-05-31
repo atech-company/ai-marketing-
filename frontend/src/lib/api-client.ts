@@ -1,9 +1,11 @@
 import type {
+  AccountOverview,
   AuthResponse,
   AdminUserRow,
   PaginatedProjects,
   Project,
   StoreAnalyticsResponse,
+  UsageLogRow,
   User,
 } from "@/types/api";
 import type { SocialTemplatesPack } from "@/types/social-templates";
@@ -175,6 +177,47 @@ export const api = {
   logout: () => apiFetch<{ message: string }>("/logout", { method: "POST" }),
 
   me: () => apiFetch<{ user: User }>("/user"),
+
+  accountOverview: () => apiFetch<AccountOverview>("/account/overview"),
+
+  accountUsageLogs: (page = 1) =>
+    apiFetch<{ data: UsageLogRow[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }>(
+      `/account/usage-logs?page=${page}`,
+    ),
+
+  updateAccountProfile: (body: { name?: string; password?: string; password_confirmation?: string }) =>
+    apiFetch<{ message: string; account: { id: number; name: string; email: string } }>("/account/profile", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  exportAccountData: async (): Promise<void> => {
+    const base = apiBase();
+    const url = new URL("account/export", `${base}/api/`).href;
+    const token = getStoredToken();
+    const headers = new Headers({ Accept: "application/json" });
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    const res = await fetch(url, { headers });
+    if (!res.ok) {
+      const payload = await res.text();
+      throw new ApiError(payload || res.statusText, res.status, payload);
+    }
+    const blob = await res.blob();
+    const disposition = res.headers.get("Content-Disposition");
+    const match = disposition?.match(/filename="?([^";]+)"?/);
+    const filename = match?.[1] ?? `fikr-ai-export-${Date.now()}.json`;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  },
+
+  deleteAllProjects: () =>
+    apiFetch<{ message: string; deleted_projects: number }>("/account/projects", {
+      method: "DELETE",
+      body: JSON.stringify({ confirm: "DELETE" }),
+    }),
 
   projects: (page = 1) =>
     apiFetch<PaginatedProjects>(`/projects?page=${page}`),

@@ -27,6 +27,50 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface AccountOverview {
+  account: {
+    id: number;
+    name: string;
+    email: string;
+    selected_plan?: string | null;
+    access_status?: string | null;
+    trial_ends_at?: string | null;
+    oauth_provider?: string | null;
+    created_at?: string | null;
+  };
+  usage: {
+    period: { label: string; starts_at: string; ends_at: string };
+    tokens: {
+      used_this_month: number;
+      monthly_limit: number;
+      unlimited: boolean;
+      remaining: number | null;
+      percent_used: number;
+    };
+    tokens_by_action: Record<string, number>;
+    activity_counts: Record<string, number>;
+    estimate_tokens_per_analysis: number;
+  };
+  data_stored: {
+    projects: number;
+    crawled_pages: number;
+    generated_contents: number;
+    usage_log_entries: number;
+  };
+}
+
+export interface UsageLogRow {
+  id: number;
+  action: string;
+  project_id: number | null;
+  project_name?: string | null;
+  total_tokens: number;
+  provider?: string | null;
+  model?: string | null;
+  meta?: Record<string, unknown> | null;
+  created_at?: string | null;
+}
+
 export interface AdminUserRow {
   id: number;
   name: string;

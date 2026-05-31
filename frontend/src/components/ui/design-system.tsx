@@ -3,6 +3,7 @@ type IconName =
   | "analyze"
   | "templates"
   | "analytics"
+  | "settings"
   | "users"
   | "adminProjects"
   | "revenue"
@@ -12,6 +13,7 @@ type IconName =
 
 const iconPaths: Record<IconName, string> = {
   projects: "M3 7h18M3 12h18M3 17h18",
+  settings: "M12 15a3 3 0 100-6 3 3 0 000 6zm8-3a8 8 0 11-16 0 8 8 0 0116 0z",
   analyze: "M4 6h16M4 12h10M4 18h16M16 10l4 4-4 4",
   templates: "M5 4h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5a1 1 0 011-1zm3 4h8m-8 4h8m-8 4h5",
   analytics: "M4 18h16M7 14v-4m5 8V6m5 12v-7",

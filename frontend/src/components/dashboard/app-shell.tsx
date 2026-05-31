@@ -71,6 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       { href: "/dashboard/projects/new", label: "Analyze website", icon: "analyze" as const },
       { href: "/dashboard/social-templates", label: "Social templates", icon: "templates" as const },
       { href: "/dashboard/store-analytics", label: "Store analytics", icon: "analytics" as const },
+      { href: "/dashboard/settings", label: "Account & usage", icon: "settings" as const },
       ...(isAdmin
         ? [
             { href: "/dashboard/admin/users", label: "Admin · Users", icon: "users" as const },
@@ -120,7 +121,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   (pathname.startsWith("/dashboard/projects/") && pathname !== "/dashboard/projects/new")
                 : item.href === "/dashboard/social-templates"
                   ? pathname.startsWith("/dashboard/social-templates")
-                  : pathname === item.href;
+                  : item.href === "/dashboard/settings"
+                    ? pathname.startsWith("/dashboard/settings")
+                    : pathname === item.href;
             return (
               <Link
                 key={item.href}
