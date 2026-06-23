@@ -1,5 +1,7 @@
 import type {
   AccountOverview,
+  AiProvidersClientData,
+  AiSettingsAdminData,
   AuthResponse,
   AdminUserRow,
   PaginatedProjects,
@@ -305,6 +307,24 @@ export const api = {
 
   adminDeleteProject: (id: number) =>
     apiFetch<{ message: string }>(`/admin/projects/${id}`, { method: "DELETE" }),
+
+  adminAiSettings: () => apiFetch<{ data: AiSettingsAdminData }>("/admin/ai-settings"),
+
+  adminUpdateAiSettings: (body: {
+    default_provider?: "openai" | "gemini";
+    providers?: Array<{
+      provider: "openai" | "gemini";
+      is_enabled?: boolean;
+      model?: string;
+      api_key?: string;
+    }>;
+  }) =>
+    apiFetch<{ message: string; data: AiSettingsAdminData }>("/admin/ai-settings", {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
+  aiProviders: () => apiFetch<{ data: AiProvidersClientData }>("/ai/providers"),
 
   storeAnalyticsAnalyzeApi: (body: {
     module_name: string;

@@ -76,6 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         ? [
             { href: "/dashboard/admin/users", label: "Admin · Users", icon: "users" as const },
             { href: "/dashboard/admin/projects", label: "Admin · Projects", icon: "adminProjects" as const },
+            { href: "/dashboard/admin/ai-settings", label: "Admin · AI", icon: "settings" as const },
           ]
         : []),
     ],

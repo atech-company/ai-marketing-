@@ -84,6 +84,26 @@ export interface AdminUserRow {
   created_at: string | null;
 }
 
+export interface AiProviderAdminRow {
+  provider: "openai" | "gemini";
+  label: string;
+  is_enabled: boolean;
+  model: string;
+  has_api_key: boolean;
+  key_hint: string | null;
+  uses_env_key: boolean;
+}
+
+export interface AiSettingsAdminData {
+  default_provider: "openai" | "gemini";
+  providers: AiProviderAdminRow[];
+}
+
+export interface AiProvidersClientData {
+  default_provider: "openai" | "gemini";
+  providers: Array<{ provider: "openai" | "gemini"; label: string }>;
+}
+
 export interface CrawledPageImage {
   url: string;
   alt?: string | null;

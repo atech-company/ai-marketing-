@@ -18,6 +18,10 @@ export default function ProjectSettingsPage() {
   const [storeApiKey, setStoreApiKey] = useState("");
   const [aiProvider, setAiProvider] = useState<"openai" | "gemini">("openai");
   const [aiApiKey, setAiApiKey] = useState("");
+  const [enabledProviders, setEnabledProviders] = useState<Array<{ provider: "openai" | "gemini"; label: string }>>([
+    { provider: "openai", label: "OpenAI" },
+    { provider: "gemini", label: "Google Gemini" },
+  ]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -28,13 +32,23 @@ export default function ProjectSettingsPage() {
     (async () => {
       try {
         const res = await api.project(id);
+        const providersRes = await api.aiProviders();
         if (!active) return;
         const p = res.data;
+        const available = providersRes.data.providers;
+        setEnabledProviders(available.length > 0 ? available : [
+          { provider: "openai", label: "OpenAI" },
+          { provider: "gemini", label: "Google Gemini" },
+        ]);
         setProject(p);
         setName(p.name);
         setPlatform((p.store_platform as "shopify" | "woocommerce" | "custom") ?? "shopify");
         setStoreUrl(p.store_url ?? "");
-        setAiProvider((p.ai_provider as "openai" | "gemini") ?? "openai");
+        const currentProvider = (p.ai_provider as "openai" | "gemini") ?? providersRes.data.default_provider;
+        const allowed = available.some((item) => item.provider === currentProvider)
+          ? currentProvider
+          : (available[0]?.provider ?? providersRes.data.default_provider);
+        setAiProvider(allowed);
       } catch (e) {
         if (!active) return;
         setError(e instanceof ApiError ? e.message : "Failed to load project.");
@@ -183,9 +197,17 @@ export default function ProjectSettingsPage() {
                 onChange={(e) => setAiProvider(e.target.value as "openai" | "gemini")}
                 className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               >
-                <option value="openai">OpenAI (GPT)</option>
-                <option value="gemini">Google Gemini</option>
+                {enabledProviders.map((item) => (
+                  <option key={item.provider} value={item.provider}>
+                    {item.label}
+                  </option>
+                ))}
               </select>
+              {enabledProviders.length === 0 && (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                  No AI providers are enabled. Ask an administrator to enable providers in Admin → AI settings.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">API key (optional update)</label>
