@@ -131,6 +131,7 @@ export interface Project {
   has_store_config?: boolean;
   ai_provider?: "openai" | "gemini" | null;
   has_ai_config?: boolean;
+  has_stored_ai_key?: boolean;
   status: ProjectStatus;
   error_message: string | null;
   created_at: string | null;

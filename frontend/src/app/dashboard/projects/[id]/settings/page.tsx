@@ -72,7 +72,7 @@ export default function ProjectSettingsPage() {
       if (aiApiKey.trim()) {
         body.ai_provider = aiProvider;
         body.ai_api_key = aiApiKey.trim();
-      } else if (project.ai_provider) {
+      } else if (aiProvider !== (project.ai_provider ?? "openai")) {
         body.ai_provider = aiProvider;
       }
 
@@ -163,6 +163,18 @@ export default function ProjectSettingsPage() {
 
         <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/70">
           <p className="text-sm font-medium text-zinc-800 dark:text-zinc-100">AI provider credentials</p>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Choose OpenAI or Gemini per project. Analysis, content generation, and store analytics for this project use the selected provider.
+          </p>
+          {project && (
+            <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-300">
+              {project.has_stored_ai_key
+                ? `Saved ${aiProvider === "gemini" ? "Gemini" : "OpenAI"} key on file.`
+                : project.has_ai_config
+                  ? "Using the server default API key for this provider."
+                  : "No API key configured yet — add one below or set OPENAI_API_KEY / GEMINI_API_KEY on the server."}
+            </p>
+          )}
           <div className="mt-3 grid gap-3">
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-200">Provider</label>
@@ -171,8 +183,8 @@ export default function ProjectSettingsPage() {
                 onChange={(e) => setAiProvider(e.target.value as "openai" | "gemini")}
                 className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               >
-                <option value="openai">OpenAI</option>
-                <option value="gemini">Gemini</option>
+                <option value="openai">OpenAI (GPT)</option>
+                <option value="gemini">Google Gemini</option>
               </select>
             </div>
             <div>
@@ -181,7 +193,11 @@ export default function ProjectSettingsPage() {
                 type="password"
                 value={aiApiKey}
                 onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={aiProvider === "gemini" ? "AIza... (leave empty to keep current key)" : "sk-... (leave empty to keep current key)"}
+                placeholder={
+                  aiProvider === "gemini"
+                    ? "AIza... (leave empty to keep current key or use server GEMINI_API_KEY)"
+                    : "sk-... (leave empty to keep current key or use server OPENAI_API_KEY)"
+                }
                 className="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-950"
               />
             </div>
